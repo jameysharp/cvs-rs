@@ -1,0 +1,3 @@
+2005-09-25  Conrad T. Pino  <Conrad@Pino.com>
+
+	* inet.h: Add empty file for POSIX compatibility per Derek Price.

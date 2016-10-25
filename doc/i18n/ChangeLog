@@ -1,0 +1,15 @@
+2008-11-25  Larry Jones  <lawrence.jones@siemens.com>
+
+	* Makefile.in: Regenerated with Autoconf 2.63.
+
+2005-03-22  Mark D. Baushke  <mdb@cvshome.org>
+
+	* Makefile.in: Regenerated.
+
+2004-12-14  Derek Price  <derek@ximbiot.com>
+
+	* .cvsignore, Makefile.am: New files.
+
+2003-12-15  Derek Price  <derek@ximbiot.com>
+
+	* ChangeLog, README: New files.

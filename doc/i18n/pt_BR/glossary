@@ -1,0 +1,148 @@
+Words and expressions hard to translate:
+
+- alias
+  not defined yet
+- annotate
+  hard to translate. one possible translation: 'com anotações'
+
+- branch
+  'ramo'. should the 'galho' too, but in the documentation I'm using
+  just 'ramo'.
+
+- check out
+  If you think in 'check out' as the opposite of 'check in', then we
+  should translate as 'pegar emprestado', as the opposite of
+  'devolver'. This is open question.
+
+- check in (verb)
+  'submeter', 'dar entrada', 'devolver'. 'submeter' is better, because
+  'devolver' can be interpreted as 'recusar'.
+
+- check in (substantivo)
+  'entrada', 'devolução'. ver 'check in (verb)'
+
+- commit
+  I think that 'efetivar' is good. But people don't like. And some
+  people are using commitar (argh!)
+
+- default
+  'padrão'
+
+- default branch
+  ramo padrão
+
+- disclaimer
+  ???
+
+- head revision
+  'revisão no topo'.
+  Other options, that I really not like, are 'revisão cabeça',
+  'revisão na cabeça'
+
+- history
+  'histórico'. when talking about the history file, leave unchanged 
+
+- keyword
+  'palavra-chave'
+
+- keyword expansion
+  'expansão de palavra-chave'
+
+- keyword substitution
+  'substituição de palavra-chave'
+
+- line ending
+  'terminação de linha'
+
+- lock
+  'travar', 'trava'.
+
+- locking
+  ???
+
+- log (verb)
+  'registrar'
+
+- log (noun)
+  'registro'
+
+- magic branch
+  'ramo mágico'
+
+- main trunk
+  'tronco principal'. see also 'trunk'
+
+- marker
+  'marcador'
+
+- match
+  'combinar'
+
+- non-branch
+  translate to 'não-ramo' is not natural in portuguese. There is any
+  problem in translate to 'tronco'
+
+- patch
+  'remendo'? 'conserto'?
+
+- prune
+  'elimina completamente'
+
+- rcs file
+  arquivo rcs
+
+- release
+  'release' until I find a better translation. A good option is 'lançamento'
+
+- repository
+  'repositório'
+
+- source repository
+  'repositório fonte'
+
+- status
+  'estado'
+
+- stick
+  'adesiva'. should be 'colante', too.
+
+- store
+  'armazenar', 'guardar'.
+
+- tag (verb)
+  'etiquetar'
+
+- tag (noun)
+  'etiqueta'
+
+- traceability
+  'rastreabilidade'
+
+- trunk
+  'tronco'. see also 'main trunk'
+
+- unreserved
+  the term appears in the expression 'unreserved checkout'. one option
+  should be 'não-reservado'
+
+- unresolved
+  appears in the term 'unresolved conflict'. the term 'unresolved
+  conflict' may be changed in future. meanwhile, let's call it
+  'conflito não-solucionado'
+
+- update
+  'atualizar'
+
+- vendor
+  'fornecedor'
+
+- vendor tag
+  'etiqueta do fornecedor'
+
+- warning message
+  'mensagem de alerta'
+
+- watches
+
+- working copy
+  'cópia de trabalho'

@@ -1,0 +1,27 @@
+Segment 1: Sign Commits and Store Signatures (6 days)
+*   4.3.1 Scan for Keywords in Commit Data & Error/Warn
+          & Supply Force Option: 1 day
+*   4.3.1 Convert EOLs, Sign, Accept Command Line Template
+          Option, Send Signature in New Server Request: 2 days
+*   4.3.2 Receive New Sig Request and Save in RCS File: 1 day
+*   4.1 Parse New RCS Phrase, Parse & Store Signatures: 2 days
+
+Segment 2: Use CVS/Base Files (8 days)
+*   4.2.2 New Naming Convention: 1 day
+*   4.2 Always Save Base Revisions in Sandbox: 4 days
+*   4.2.3 Send Signatures & Store in Base: 1 day
+-   4.2.4 Delay End of Line Conversion: 2 days
+
+Segment 3: CVS Log, Status, Verify, & Sign (6 days)
+*   4.5 cvs log Prints Sig Summary Data: 1 day
+*   4.6 Download Base Revision, Download Sig, Verify: 1 day
+*   4.6.3 cvs verify -p Cats Sig to stdout, cvs status
+          Automatically Verifies: 1 day
+*   4.7 cvs sign Command: 1 day
+*   4.7 cvs sign -d to Delete Signatures from Revisions: 1 day
+*   4.3.2 Server Verifies Signatures when Configured So: 1 day
+
+Segment 4: Checkout/Update/Diff (8 days)
+*   4.4.1 Verify each Revision after Download: 1 day
+*   4.4.2 Client-side Merges: 5 days
+*   4.2.5.2 Client-side Diffs: 2 days

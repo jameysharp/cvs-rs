@@ -1,0 +1,74 @@
+ChangeLog entry:
+
+2001-01-05  Preston Brown  <pbrown@redhat.com>
+
+	This patch appears in rcs-5.7-15.src.rpm and shipped with
+	Redhat 7.3
+	* rcsfnms.c (tmpcleanup): New function used by atexit().
+	(tmp): tmpfile security patch from Olaf Kirch <okir@lst.de>
+
+Index:src/rcsfnms.c
+--- src/rcsfnms.c~	1995-06-16 06:19:24.000000000 +0000
++++ src/rcsfnms.c	2001-01-05 10:00:21.000000000 +0000
+@@ -258,19 +258,57 @@ static struct compair const comtable[] =
+ };
+ 
+ #if has_mktemp
++static char	tmppath[1024];
++
++	static void
++tmpcleanup()
++{
++	/* For now, assume that all temp files get
++	 * removed before we are invoked */
++	rmdir(tmppath);
++}
++
+ 	static char const *tmp P((void));
+ 	static char const *
+ tmp()
+ /* Yield the name of the tmp directory.  */
+ {
+-	static char const *s;
+-	if (!s
+-		&&  !(s = cgetenv("TMPDIR"))	/* Unix tradition */
++	const char	*s;
++
++	if (tmppath[0])
++		return tmppath;
++
++	if (!(s = cgetenv("TMPDIR"))		/* Unix tradition */
+ 		&&  !(s = cgetenv("TMP"))	/* DOS tradition */
+ 		&&  !(s = cgetenv("TEMP"))	/* another DOS tradition */
+ 	)
+ 		s = TMPDIR;
+-	return s;
++
++	if (strlen(s) > sizeof(tmppath) - 11)
++		s = TMPDIR;
++
++#if defined(__GLIBC_PREREQ) && __GLIBC_PREREQ(2, 2)
++	snprintf(tmppath, sizeof(tmppath), "%s/rcsXXXXXX", s);
++	if (!mkdtemp(tmppath) || !tmppath[0])
++		goto failed;
++#else
++	while (1) {
++		snprintf(tmppath, sizeof(tmppath), "%s/rcsXXXXXX", s);
++		if (!mktemp(tmppath) || !tmppath[0])
++			goto failed;
++		if (mkdir(tmppath, 0700) >= 0)
++			break;
++		if (errno != EEXIST)
++			goto failed;
++	}
++#endif
++
++	atexit(tmpcleanup);
++	return tmppath;
++
++failed:
++	perror("Unable to create temp directory");
++	exit(123);
+ }
+ #endif
+ 

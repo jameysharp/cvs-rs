@@ -1,0 +1,181 @@
+#! /bin/sh
+# Update the local files from GNULIB.  Currently assumes that the current
+# GNULIB sources are in a directory parallel with this one.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+
+usage()
+{
+  cat <<EOF
+usage: `basename $0` [--help]
+       `basename $0` [--import MODULE...]
+EOF
+}
+
+# Where to find the GNULIB sources.
+GNULIB_DEFAULT=../gnulib
+: ${GNULIB=$GNULIB_DEFAULT}
+GNULIB_TOOL=$GNULIB/gnulib-tool
+
+if test x"$1" = x--help; then
+  usage
+  cat <<EOF
+
+Run without arguments, `basename $0` will update the local GNULIB modules to
+the most recent versions found in \$GNULIB (defaults to \`$GNULIB').
+ 
+OPTIONS
+  --help              Display this text.
+  --import MODULE...  Import new GNULIB module MODULE, in addition to updating
+                      all previously imported modules.
+
+ENVIRONMENT
+  \$GNULIB            The directory to search for new GNULIB modules.
+EOF
+  exit 0
+fi
+
+if test -n "$1"; then
+  if test x"$1" != x--import || test -z "$2"; then
+    usage >&2
+    exit 2
+  fi
+  shift
+fi
+
+if test -f maint-aux/gnulib-update; then :; else
+  >&2 echo \
+"This script expects to be run from the top level of the CVS source tree."
+  exit 2
+fi
+
+# Are the GNULIB sources really where we expect them?
+if test -r $GNULIB && test -d $GNULIB \
+   && test -r $GNULIB_TOOL && test -f $GNULIB_TOOL; then :; else
+  echo GNULIB sources not found. >&2
+  exit 1
+fi
+
+# Do cleanup.
+trap \
+'status=$?
+# Restore lib/Makefile.am.
+if test -f lib/Makefile.am.save; then
+  mv lib/Makefile.am.save lib/Makefile.am
+fi
+# Restore m4/error.m4.
+if test -f m4/error.m4.save; then
+  mv m4/error.m4.save m4/error.m4
+fi
+# Clean up temp files.
+rm -f maint-aux/gnulib-filelist.tmp maint-aux/gnulib-filelist.new \
+      maint-aux/gnulib-modules.tmp maint-aux/gnulib-modules.new \
+      maint-aux/gnulib-modules.last maint-aux/gnulib-modules.txt
+exit $status' EXIT
+
+# Do cleanup on CTRL-C (SIGINT is signal 2 - Solaris 9 doesn't like the
+# symbolic name).
+trap 'exit $?' 2
+	
+# Prevent lib/Makefile.am from being overwritten.
+mv lib/Makefile.am lib/Makefile.am.save
+# Prevent m4/error.m4 from being overwritten unless necessary.
+mv m4/error.m4 m4/error.m4.save
+
+# Run the update.
+if $GNULIB_TOOL --import ${1+"$@"} >/dev/null; then :; else
+  exit $?
+fi
+
+# Correct this file for our purposes, but try to avoid munging timestamps
+# unless necessary.
+sed '/AC_FUNC_ERROR_AT_LINE/d' <m4/error.m4 >tmp
+if cmp tmp m4/error.m4.save >/dev/null 2>&1; then
+  mv m4/error.m4.save m4/error.m4
+  rm tmp
+else
+  mv tmp m4/error.m4
+  rm m4/error.m4.save
+fi
+
+# Extract the names of the files we imported.
+sed -n '/^gl_MODULES/,/^[^ ])/{/^ /p;}' \
+    <m4/gnulib-cache.m4 >maint-aux/gnulib-modules.txt
+rm -f maint-aux/gnulib-modules.last
+touch maint-aux/gnulib-modules.last
+while :; do
+  rm -f maint-aux/gnulib-modules.tmp
+  touch maint-aux/gnulib-modules.tmp
+  for module in `cat maint-aux/gnulib-modules.txt`; do
+    if grep -w $module maint-aux/gnulib-modules.last >/dev/null; then
+      # Don't check the same module twice.
+      continue
+    fi
+    $GNULIB_TOOL --extract-dependencies $module >>maint-aux/gnulib-modules.tmp
+  done
+  cat maint-aux/gnulib-modules.txt maint-aux/gnulib-modules.tmp \
+    |sort |uniq |sed '/^$/d' \
+    > maint-aux/gnulib-modules.new
+  if cmp maint-aux/gnulib-modules.txt maint-aux/gnulib-modules.new >/dev/null
+  then
+    # If the files are the same then there are no more dependencies.
+    break
+  fi
+  mv maint-aux/gnulib-modules.txt maint-aux/gnulib-modules.last
+  mv maint-aux/gnulib-modules.new maint-aux/gnulib-modules.txt
+done
+rm maint-aux/gnulib-modules.tmp maint-aux/gnulib-modules.new \
+   maint-aux/gnulib-modules.last
+
+rm -f maint-aux/gnulib-filelist.tmp
+for module in `cat maint-aux/gnulib-modules.txt`; do
+  $GNULIB_TOOL --extract-filelist $module >>maint-aux/gnulib-filelist.tmp
+done
+sort <maint-aux/gnulib-filelist.tmp \
+  |uniq |sed '/^$/d' \
+  >maint-aux/gnulib-filelist.new
+rm maint-aux/gnulib-modules.txt maint-aux/gnulib-filelist.tmp
+
+# Warn the user if the file list has changed.
+if cmp maint-aux/gnulib-filelist.txt maint-aux/gnulib-filelist.new >/dev/null
+then
+  # Avoid munging timestamps when nothing's changed.
+  rm maint-aux/gnulib-filelist.new
+else
+  cat >&2 <<\EOF
+********************************************************************
+The file list has changed.  You may need to add or remove files from
+CVS.  Use `cvs diff maint-aux/gnulib-filelist.txt' to view changes.
+********************************************************************
+EOF
+  # Save the file list for next time.
+  mv maint-aux/gnulib-filelist.new maint-aux/gnulib-filelist.txt
+fi
+
+
+# Warn the user if changes have been made to the Makefile.am.
+if cmp lib/Makefile.am lib/Makefile.gnulib >/dev/null; then
+  # Avoid munging timestamps when nothing's changed.
+  rm lib/Makefile.am
+else
+  cat >&2 <<\EOF
+********************************************************************
+Makefile.am may need updating. Use `cvs diff lib/Makefile.gnulib' to
+view changes.
+********************************************************************
+EOF
+  # Save the generated lib/Makefile.am for next time.
+  mv lib/Makefile.am lib/Makefile.gnulib
+fi

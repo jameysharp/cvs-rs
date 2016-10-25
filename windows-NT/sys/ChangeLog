@@ -1,0 +1,22 @@
+2005-09-26  Conrad T. Pino  <Conrad@Pino.com>
+
+	* types.h: Visual C++ 5.0 (11.00) is different to support distinctly.
+
+2005-09-25  Conrad T. Pino  <Conrad@Pino.com>
+
+	* socket.h: Guard against multiple includes with SYS_SOCKET_H macro.
+	Change "#define WIN32_LEAN_AND_MEAN 1" to "#define WIN32_LEAN_AND_MEAN".
+
+2005-09-20  Conrad T. Pino  <Conrad@Pino.com>
+
+	* socket.h: Add this file since Windows doesn't provide one.
+
+2005-05-31  Conrad T. Pino  <Conrad@Pino.com>
+
+	* types.h: Add Visual C++ .NET 2003 - cl.exe version 13.10 support.
+
+2005-05-31  Conrad T. Pino  <Conrad@Pino.com>
+
+	* types.h: Microsoft's implementation is way too lame.
+	  Define symbols used by Visual C++ 6.0 - cl.exe version 12.00
+	  Define symbols used by CVS Project.

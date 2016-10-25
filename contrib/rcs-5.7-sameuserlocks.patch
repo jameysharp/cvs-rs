@@ -1,0 +1,152 @@
+Problem description available here:
+https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=107947
+http://lists.gnu.org/archive/html/help-rcs/2003-10/msg00010.html
+
+2003-10-31  Phil Knirsch  <pknirsch@redhat.com>.
+
+	This patch appeared in rcs-5.7-24.src.rpm in Fedora Core 2.
+	* man/co.1: Document -S switch.
+	* src/rcsedit.c (addlock): Additional sameuserlocks arg.
+	* src/ci.c (mainProg): Pass new arg to addlock().
+	* src/co.c (mainProg): Keep track of sameuserlocks. Process
+	new -S switch. Pass sameuserlocks to addlock().
+	* src/rcsbase.h (addlock): Update prototype.
+	* src/rcs.c (setlock): Pass new arg to addlock().
+	* src/rcsedit.c (addlock): Update to use new sameuserlocks arg
+	and add new semantics for when it is false.
+	Patch submitted by James Olin Oden against Fedora Core test3
+	https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=107947
+
+The timestamps in this patch have been converted to UTC from the
+original -0400.
+
+Index:man/co.1
+--- man/co.1~	1995-06-01 16:23:43.000000000 +0000
++++ man/co.1	2003-10-24 17:59:22.000000000 +0000
+@@ -324,6 +324,10 @@ Use this option with care; it can confus
+ retrieves the latest revision on the selected branch whose state is set to
+ .IR state .
+ .TP
++.BI \-S
++Turns on same user locks.  When this is enabled the user cannot check out
++the same file twice.
++.TP
+ .B \-T
+ Preserve the modification time on the \*r file
+ even if the \*r file changes because a lock is added or removed.
+Index:src/ci.c
+--- src/ci.c~	1995-06-16 06:19:24.000000000 +0000
++++ src/ci.c	2003-10-24 17:50:36.000000000 +0000
+@@ -566,7 +566,7 @@ mainProg(ciId, "ci", "$Id: ci.c,v 5.30 1
+ 	}
+ 
+ 
+-	if (lockflag  &&  addlock(&newdelta, true) < 0) continue;
++	if (lockflag  &&  addlock(&newdelta, true, false) < 0) continue;
+ 
+ 	if (keepflag && *prevname.string)
+ 	    if (addsymbol(newdelta.num, prevname.string, false)  <  0)
+Index:src/co.c
+--- src/co.c~	1995-06-16 06:19:24.000000000 +0000
++++ src/co.c	2003-10-24 16:49:20.000000000 +0000
+@@ -203,6 +203,7 @@ mainProg(coId, "co", "$Id: co.c,v 5.18 1
+ 	int changelock;  /* 1 if a lock has been changed, -1 if error */
+ 	int expmode, r, tostdout, workstatstat;
+ 	int Ttimeflag;
++	int sameuserlocks;
+ 	struct buf numericrev;	/* expanded revision number	*/
+ 	char finaldate[datesize];
+ #	if OPEN_O_BINARY
+@@ -217,6 +218,7 @@ mainProg(coId, "co", "$Id: co.c,v 5.18 1
+ 	suffixes = X_DEFAULT;
+ 	tostdout = false;
+ 	Ttimeflag = false;
++	sameuserlocks = false;	
+ 
+ 	argc = getRCSINIT(argc, argv, &newargv);
+ 	argv = newargv;
+@@ -286,12 +288,20 @@ mainProg(coId, "co", "$Id: co.c,v 5.18 1
+                         }
+                         break;
+ 
++		case 'S':
++			/* 
++			 *  Enable strict locks (i.e. even the same user cannot
++ 			 *  re-check out a file with a lock that he owns.
++			 */
++			sameuserlocks = true;
++			break;
++ 
+ 		case 'T':
+ 			if (*a)
+ 				goto unknown;
+ 			Ttimeflag = true;
+ 			break;
+-
++		
+                 case 'w':
+ 			if (author) redefined('w');
+ 			if (*a)
+@@ -417,7 +427,7 @@ mainProg(coId, "co", "$Id: co.c,v 5.18 1
+ 			: lockflag == 0 ?
+ 				0
+ 			:
+-				addlock(targetdelta, true);
++				addlock(targetdelta, true, sameuserlocks);
+ 
+ 		if (
+ 			changelock < 0
+Index:src/rcsbase.h
+--- src/rcsbase.h~	1995-06-16 06:19:24.000000000 +0000
++++ src/rcsbase.h	2003-10-24 16:56:06.000000000 +0000
+@@ -454,7 +454,7 @@ extern int locker_expansion;
+ RILE *rcswriteopen P((struct buf*,struct stat*,int));
+ char const *makedirtemp P((int));
+ char const *getcaller P((void));
+-int addlock P((struct hshentry*,int));
++int addlock P((struct hshentry*,int,int));
+ int addsymbol P((char const*,char const*,int));
+ int checkaccesslist P((void));
+ int chnamemod P((FILE**,char const*,char const*,int,mode_t,time_t));
+Index:src/rcs.c
+--- src/rcs.c~	1995-06-16 06:19:24.000000000 +0000
++++ src/rcs.c	2003-10-24 17:53:39.000000000 +0000
+@@ -1437,8 +1437,8 @@ setlock(rev)
+ 			numrev.string
+ 		    );
+ 	       else {
+-		    if ((r = addlock(target, false)) < 0  &&  breaklock(target))
+-			r = addlock(target, true);
++		    if ((r = addlock(target, false, false)) < 0  &&  breaklock(target))
++			r = addlock(target, true, false);
+ 		    if (0 <= r) {
+ 			if (r)
+ 			    diagnose("%s locked\n", target->num);
+Index:src/rcsedit.c
+--- src/rcsedit.c~	1995-06-16 06:19:24.000000000 +0000
++++ src/rcsedit.c	2003-10-24 17:51:14.000000000 +0000
+@@ -1708,9 +1708,10 @@ findlock(delete, target)
+ }
+ 
+ 	int
+-addlock(delta, verbose)
++addlock(delta, verbose, sameuserlocks)
+ 	struct hshentry * delta;
+ 	int verbose;
++	int sameuserlocks;
+ /*
+  * Add a lock held by caller to DELTA and yield 1 if successful.
+  * Print an error message if verbose and yield -1 if no lock is added because
+@@ -1722,9 +1723,10 @@ addlock(delta, verbose)
+ 
+ 	for (next = Locks;  next;  next = next->nextlock)
+ 		if (cmpnum(delta->num, next->delta->num) == 0)
+-			if (strcmp(getcaller(), next->login) == 0)
++			if (strcmp(getcaller(), next->login) == 0 && !sameuserlocks)
+ 				return 0;
+-			else {
++			else { 
++		
+ 				if (verbose)
+ 				  rcserror("Revision %s is already locked by %s.",
+ 					delta->num, next->login
