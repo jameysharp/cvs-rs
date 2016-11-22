@@ -41,3 +41,5 @@ cvsclient.vr
 getdate-cvs.texi
 stamp-gdt
 mkman
+
+*.t2p/

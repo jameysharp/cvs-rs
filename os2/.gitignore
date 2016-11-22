@@ -1,3 +1,5 @@
 Makefile
 cvs.exe
 icc.in
+
+!Makefile.in

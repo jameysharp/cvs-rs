@@ -1,3 +1,5 @@
 Makefile
 cvs.exe
 cvs.out
+
+!Makefile.in

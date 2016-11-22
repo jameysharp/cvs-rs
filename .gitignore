@@ -18,3 +18,13 @@ cvsinit
 cvsnt.mdp
 cvsnt.001
 stamp-h1
+
+/build-aux/
+/INSTALL
+/aclocal.m4
+/config.h.in
+/configure
+/config.h.in~
+Makefile.in
+*.o
+*.a

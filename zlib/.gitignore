@@ -8,3 +8,5 @@ foo.gz
 WinDebug
 WinRel
 zlib.001
+
+!Makefile.in
