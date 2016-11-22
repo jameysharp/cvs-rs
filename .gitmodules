@@ -1,0 +1,3 @@
+[submodule "corrode"]
+	path = corrode
+	url = https://github.com/jameysharp/corrode.git

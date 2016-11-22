@@ -28,3 +28,8 @@ stamp-h1
 Makefile.in
 *.o
 *.a
+
+/.cabal-sandbox/
+/cabal.sandbox.config
+*.rs
+errors-*
