@@ -1,0 +1,256 @@
+In C, it's generally harmless if a local variable has the same name as a
+global variable. Many C compilers offer an option to warn you if you do
+this, because it can be confusing to figure out which variable you meant
+if several have identical names--but it is still legal C.
+
+Not so in Rust, where let-binding a local variable with the same name as
+a global static item leads to an error message like this:
+
+entries.rs:1024:9: 1024:20 error: static variables cannot be referenced in a pattern, use a `const` instead [E0417]
+entries.rs:1024     let mut entfile : *mut u8;
+                        ^~~~~~~~~~~
+entries.rs:90:1: 90:59 note: static variable defined here
+entries.rs:90 static mut entfile : *mut _IO_FILE = 0 as (*mut _IO_FILE);
+              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+entries.rs:1024:9: 1024:20 help: run `rustc --explain E0417` to see a detailed explanation
+
+Ideally, Corrode would handle cases like this automatically (this is bug
+https://github.com/jameysharp/corrode/issues/92). But doing so correctly
+is tricky, and it's pretty easy to fix these cases by hand.
+
+Index: b/src/entries.c
+===================================================================
+--- a/src/entries.c
++++ b/src/entries.c
+@@ -187,7 +187,6 @@ write_entries (List *list, const char *u
+     int sawdir;
+     char *update_file;
+     char *bakfilename;
+-    char *entfilename;
+ 
+     assert (update_dir);
+     assert (dir);
+@@ -232,20 +231,20 @@ write_entries (List *list, const char *u
+ 	error (1, errno, "error closing %s", quote (update_file));
+ 
+     /* now, atomically (on systems that support it) rename it */
+-    entfilename = dir_append (dir, CVSADM_ENT);
+-    rename_file (bakfilename, entfilename);
+-    free (entfilename);
++    char *filename = dir_append (dir, CVSADM_ENT);
++    rename_file (bakfilename, filename);
++    free (filename);
+ 
+-    entfilename = dir_append (dir, CVSADM_ENTLOG);
++    filename = dir_append (dir, CVSADM_ENTLOG);
+     /* now, remove the log file */
+-    if (unlink_file (entfilename) < 0 && !existence_error (errno))
++    if (unlink_file (filename) < 0 && !existence_error (errno))
+     {
+ 	char *newupdate_file = dir_append_dirs (update_dir, dir, CVSADM_ENTLOG,
+ 						NULL);
+ 	error (0, errno, "cannot remove %s", quote (newupdate_file));
+ 	free (newupdate_file);
+     }
+-    free (entfilename);
++    free (filename);
+ 
+ done:
+     free (bakfilename);
+@@ -654,7 +653,7 @@ Entries_Open_Dir (int aflag, const char
+     int do_rewrite = 0;
+     FILE *fpin;
+     int sawdir;
+-    char *entfile;
++    char *filename;
+     char *update_dir;
+ 
+     assert (update_dir_i);
+@@ -686,8 +685,8 @@ Entries_Open_Dir (int aflag, const char
+     sawdir = 0;
+ 
+     update_dir = dir_append (update_dir_i, dir);
+-    entfile = dir_append (dir, CVSADM_ENT);
+-    fpin = CVS_FOPEN (entfile, "r");
++    filename = dir_append (dir, CVSADM_ENT);
++    fpin = CVS_FOPEN (filename, "r");
+     if (fpin)
+     {
+ 	while ((ent = fgetentent (fpin, NULL, &sawdir)) != NULL)
+@@ -707,10 +706,10 @@ Entries_Open_Dir (int aflag, const char
+ 	error (0, errno, "cannot open %s for reading", quote (update_file));
+ 	free (update_file);
+     }
+-    free (entfile);
++    free (filename);
+ 
+-    entfile = dir_append (dir, CVSADM_ENTLOG);
+-    fpin = CVS_FOPEN (entfile, "r");
++    filename = dir_append (dir, CVSADM_ENTLOG);
++    fpin = CVS_FOPEN (filename, "r");
+     if (fpin) 
+     {
+ 	char cmd;
+@@ -742,7 +741,7 @@ Entries_Open_Dir (int aflag, const char
+ 	    free (update_file);
+ 	}
+     }
+-    free (entfile);
++    free (filename);
+ 
+     /* Update the list private data to indicate whether subdirectory
+        information is known.  Nonexistent list private data is taken
+@@ -789,10 +788,10 @@ Entries_Close_Dir (List *list, const cha
+     {
+ 	if (!noexec)
+ 	{
+-	    char *entfile = dir_append (dir, CVSADM_ENTLOG);
+-	    if (isfile (entfile))
++	    char *filename = dir_append (dir, CVSADM_ENTLOG);
++	    if (isfile (filename))
+ 		write_entries (list, update_dir, dir);
+-	    free (entfile);
++	    free (filename);
+ 	}
+ 	dellist (&list);
+     }
+Index: b/src/filesubr.c
+===================================================================
+--- a/src/filesubr.c
++++ b/src/filesubr.c
+@@ -303,7 +303,7 @@ isaccessible (const char *file, const in
+  * have unexpected consequences for some uses of xchmod.
+  */
+ static void
+-ixchmod (const char *fname, bool writable, bool noexec)
++ixchmod (const char *fname, bool writable, bool local_noexec)
+ {
+     struct stat sb;
+     mode_t mode, oumask;
+@@ -315,7 +315,7 @@ ixchmod (const char *fname, bool writabl
+ 
+     if (stat (fname, &sb) < 0)
+     {
+-	if (!noexec)
++	if (!local_noexec)
+ 	    error (0, errno, "cannot stat %s", fname);
+ 	return;
+     }
+@@ -331,7 +331,7 @@ ixchmod (const char *fname, bool writabl
+ 
+     TRACE (TRACE_FUNCTION, "chmod(%s,%o)", fname, (unsigned int) mode);
+ 
+-    if (noexec)
++    if (local_noexec)
+ 	return;
+ 
+     if (chmod (fname, mode) < 0)
+Index: b/src/log.c
+===================================================================
+--- a/src/log.c
++++ b/src/log.c
+@@ -164,7 +164,7 @@ static void log_version (struct log_data
+ static int log_branch (Node *, void *);
+ static int version_compare (const char *, const char *, int);
+ 
+-static struct log_data log_data;
++static struct log_data *global_log_data;
+ static int is_rlog;
+ 
+ static const char *const log_usage[] =
+@@ -251,7 +251,7 @@ cvslog (int argc, char **argv)
+     if (argc == -1)
+ 	usage (log_usage);
+ 
+-    memset (&log_data, 0, sizeof log_data);
++    struct log_data log_data = {};
+     prl = &log_data.revlist;
+ 
+     optind = 0;
+@@ -432,6 +432,7 @@ cvslog (int argc, char **argv)
+     if (findnode (log_data.authorlist, "@@MYSELF") != NULL)
+ 	log_parse_list (&log_data.authorlist, getcaller ());
+ 
++    global_log_data = &log_data;
+     if (is_rlog)
+     {
+ 	DBM *db;
+@@ -449,6 +450,7 @@ cvslog (int argc, char **argv)
+         err = rlog_proc (argc + 1, argv - 1, NULL, NULL, NULL, 0, local, NULL,
+                          NULL);
+     }
++    global_log_data = 0;
+ 
+     while (log_data.revlist)
+     {
+@@ -553,7 +555,7 @@ rlog_proc (int argc, char **argv, char *
+     }
+ 
+     err = start_recursion (log_fileproc, NULL, log_dirproc,
+-			   NULL, &log_data,
++			   NULL, global_log_data,
+ 			   argc - 1, argv + 1, local, which, 0, CVS_LOCK_READ,
+ 			   where, 1, repository);
+ 
+Index: b/src/logmsg.c
+===================================================================
+--- a/src/logmsg.c
++++ b/src/logmsg.c
+@@ -491,18 +491,18 @@ verifymsg_proc (const char *repository,
+      */
+     if (vpd->fname == NULL)
+     {
+-	FILE *fp;
+-	if ((fp = cvs_temp_file (&(vpd->fname))) == NULL)
++	FILE *tmpfp = cvs_temp_file (&(vpd->fname));
++	if (tmpfp == NULL)
+ 	    error (1, errno, "%s:%d: cannot create temporary file %s",
+ 		   file, line, quote (vpd->fname));
+ 
+ 	if (vpd->message != NULL)
+-	    fputs (vpd->message, fp);
++	    fputs (vpd->message, tmpfp);
+ 	if (vpd->message == NULL ||
+ 	    (vpd->message)[0] == '\0' ||
+ 	    (vpd->message)[strlen (vpd->message) - 1] != '\n')
+-	    putc ('\n', fp);
+-	if (fclose (fp) == EOF)
++	    putc ('\n', tmpfp);
++	if (fclose (tmpfp) == EOF)
+ 	    error (1, errno, "%s:%d: error closing temporary file %s",
+ 		   file, line, quote (vpd->fname));
+ 
+@@ -682,9 +682,9 @@ do_verify (char **messagep, const char *
+ 	    int line_length;
+ 	    size_t line_chars_allocated = 0;
+ 	    char *p;
+-	    FILE *fp;
++	    FILE *datafp;
+ 
+-	    fp = xfopen (data.fname, "r");
++	    datafp = xfopen (data.fname, "r");
+ 
+ 	    /* On NT, we might read less than st_size bytes,
+ 	       but we won't read more.  So this works.  */
+@@ -695,10 +695,10 @@ do_verify (char **messagep, const char *
+ 	    {
+ 		line_length = getline( &line,
+ 				       &line_chars_allocated,
+-				       fp);
++				       datafp);
+ 		if (line_length == -1)
+ 		{
+-		    if (ferror (fp))
++		    if (ferror (datafp))
+ 			/* Fail in this case because otherwise we will have no
+ 			 * log message
+ 			 */
+@@ -711,7 +711,7 @@ do_verify (char **messagep, const char *
+ 		p += line_length;
+ 	    }
+ 	    if (line) free (line);
+-	    if (fclose (fp) < 0)
++	    if (fclose (datafp) < 0)
+ 	        error (0, errno, "warning: cannot close %s", data.fname);
+ 	}
+     }

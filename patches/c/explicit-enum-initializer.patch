@@ -1,0 +1,62 @@
+In C, `enum` types are treated identically to `int`. In Rust, they are
+not. Fortunately, the CVS source generally uses `enum`-typed variables
+in a way that's legal in Rust, but there are a few exceptions, addressed
+by this patch.
+
+If a global variable is not explicitly initialized in C, then it's
+supposed to be initialized to the zero-equivalent value for its type.
+For an `enum`, that's just the `int` value 0.
+
+In Rust, an `enum` is only allowed to hold values that correspond to its
+declared variants. If none of those corresponds to 0, then the C
+zero-equivalent can't be expressed in Rust. Even if some variant does
+correspond to 0, determining which one may involve evaluating arbitrary
+constant expressions, making it difficult to do automatically. So
+Corrode doesn't try.
+
+However, it's not that hard to manually pick an initial `enum` variant
+for each global variable. In the case of CVS, it doesn't even matter
+which one we choose because these variables are not read until they've
+been written to.
+
+Index: b/lib/quotearg.c
+===================================================================
+--- a/lib/quotearg.c
++++ b/lib/quotearg.c
+@@ -101,7 +101,9 @@ enum quoting_style const quoting_style_v
+ };
+ 
+ /* The default quoting options.  */
+-static struct quoting_options default_quoting_options;
++static struct quoting_options default_quoting_options = {
++  .style = literal_quoting_style,
++};
+ 
+ /* Allocate a new set of quoting options, with contents initially identical
+    to O if O is not null, or to the default if O is null.
+Index: b/src/checkout.c
+===================================================================
+--- a/src/checkout.c
++++ b/src/checkout.c
+@@ -114,7 +114,7 @@ static char *join_rev1, *join_date1;
+ static char *join_rev2, *join_date2;
+ static bool join_tags_validated;
+ static char *history_name;
+-static enum mtype m_type;
++static enum mtype m_type = MISC;
+ 
+ int
+ checkout (int argc, char **argv)
+Index: b/src/logmsg.c
+===================================================================
+--- a/src/logmsg.c
++++ b/src/logmsg.c
+@@ -36,7 +36,7 @@ static int logmsg_list_to_args_proc (Nod
+ static void setup_tmpfile (FILE * xfp, char *xprefix, List * changes);
+ 
+ static FILE *fp;
+-static Ctype type;
++static Ctype type = T_UNKNOWN;
+ 
+ struct verifymsg_proc_data
+ {

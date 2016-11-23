@@ -31,5 +31,6 @@ Makefile.in
 
 /.cabal-sandbox/
 /cabal.sandbox.config
+/.pc/
 *.rs
 errors-*

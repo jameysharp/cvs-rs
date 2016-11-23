@@ -6,6 +6,8 @@ if ! test -e corrode/corrode.cabal; then
 	git submodule update --init
 fi
 
+quilt push -a
+
 cabal sandbox init
 cabal sandbox add-source corrode
 cabal --require-sandbox install corrode
