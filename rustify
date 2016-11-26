@@ -17,4 +17,4 @@ if ! test -e config.status; then
 	./configure --with-external-zlib
 fi
 
-PATH=".cabal-sandbox/bin:$PATH" make CC="`pwd`/corrode/scripts/corrode-cc"
+PATH="`pwd`/.cabal-sandbox/bin:$PATH" make CC="`pwd`/corrode/scripts/corrode-cc"
