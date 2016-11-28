@@ -1,0 +1,71 @@
+This patch introduces build-system changes to:
+
+- run Corrode;
+- compile the generated Rust into a single-crate static library;
+- and link the remaining native C source with the new library.
+
+Index: b/src/Makefile.am
+===================================================================
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -44,13 +44,11 @@ cvs_SOURCES = \
+ 	edit.c \
+ 	entries.c entries.h \
+ 	error.c \
+-	exithandle.c \
+ 	expand_path.c \
+ 	fileattr.c \
+ 	filesubr.c filesubr.h \
+ 	find_names.c \
+ 	gpg.c gpg.h \
+-	hardlink.c \
+ 	hash.c \
+ 	history.c \
+ 	ignore.c ignore.h \
+@@ -70,7 +68,6 @@ cvs_SOURCES = \
+ 	parseinfo.c parseinfo.h \
+ 	patch.c \
+ 	rcs.c \
+-	rcscmds.c \
+ 	recurse.c recurse.h \
+ 	release.c \
+ 	remove.c \
+@@ -78,7 +75,6 @@ cvs_SOURCES = \
+ 	root.c \
+ 	rsh-client.c rsh-client.h \
+ 	run.c run.h \
+-	scramble.c \
+ 	server.c \
+ 	sign.c sign.h \
+ 	stack.c stack.h \
+@@ -107,15 +103,30 @@ cvs_SOURCES = \
+ 	update.h \
+ 	watch.h
+ 
++RUST_SOURCES = \
++	exithandle.rs \
++	hardlink.rs \
++	rcscmds.rs \
++	scramble.rs
++
++%.rs: CC=corrode
++%.rs: %.c
++	$(COMPILE) -c $< >/dev/null
++
++libcvs-rs.a: lib.rs $(RUST_SOURCES)
++	rustc --crate-type=staticlib -o $@ $<
++
+ EXTRA_cvs_SOURCES = gssapi-client.c gssapi-client.h \
+                     kerberos4-client.c kerberos4-client.h \
+ 		    socket-client.c socket-client.h
+ 
+ cvs_DEPENDENCIES = $(cvs_client_objects) \
++	libcvs-rs.a \
+ 	../diff/libdiff.a \
+ 	../lib/libcvs.a \
+ 	$(ZLIB_LIBS)
+ cvs_LDADD = $(cvs_client_objects) \
++	libcvs-rs.a -ldl -lpthread -lgcc_s -lc -lm -lrt -lutil \
+ 	../diff/libdiff.a \
+ 	../lib/libcvs.a \
+ 	$(ZLIB_LIBS) \

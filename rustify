@@ -6,15 +6,18 @@ if ! test -e corrode/corrode.cabal; then
 	git submodule update --init
 fi
 
-quilt push -a
+quilt push build.patch
 
 cabal sandbox init
 cabal sandbox add-source corrode
 cabal --require-sandbox install corrode
 
-if ! test -e config.status; then
+if ! test -x config.status; then
 	autoreconf -if
 	./configure --with-external-zlib
+else
+	automake
+	./config.status
 fi
 
-PATH="`pwd`/.cabal-sandbox/bin:$PATH" make CC="`pwd`/corrode/scripts/corrode-cc"
+PATH="`pwd`/.cabal-sandbox/bin:$PATH" make
