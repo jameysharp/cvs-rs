@@ -1,0 +1,69 @@
+Corrode translates one source file at a time, so it doesn't know whether
+any of the type or external function declarations it sees belong to
+other modules that will be placed in the same crate.
+
+This patch deletes definitions that are redundant with other modules
+that we're translating in the same crate.
+
+Index: b/src/stack.rs
+===================================================================
+--- a/src/stack.rs
++++ b/src/stack.rs
+@@ -1,56 +1,8 @@
+ extern {
+     fn Xstrdup(str : *const u8) -> *mut u8;
+-    fn addnode(list : *mut hashlist, p : *mut hashnode) -> i32;
+-    fn addnode_at_front(
+-        list : *mut hashlist, p : *mut hashnode
+-    ) -> i32;
+-    fn delnode(p : *mut hashnode);
+-    fn getlist() -> *mut hashlist;
+-    fn getnode() -> *mut hashnode;
+ }
+ 
+-#[derive(Clone, Copy)]
+-#[repr(i32)]
+-pub enum ntype {
+-    NT_UNKNOWN,
+-    HEADER,
+-    ENTRIES,
+-    FILES,
+-    LIST,
+-    RCSNODE,
+-    RCSVERS,
+-    DIRS,
+-    UPDATE,
+-    LOCK,
+-    NDBMNODE,
+-    FILEATTR,
+-    VARIABLE,
+-    RCSFIELD,
+-    RCSCMPFLD,
+-    RCSSTRING,
+-}
+-
+-#[derive(Clone, Copy)]
+-#[repr(C)]
+-pub struct hashnode {
+-    pub type_ : ntype,
+-    pub next : *mut hashnode,
+-    pub prev : *mut hashnode,
+-    pub hashnext : *mut hashnode,
+-    pub hashprev : *mut hashnode,
+-    pub key : *mut u8,
+-    pub data : *mut ::std::os::raw::c_void,
+-    pub len : usize,
+-    pub delproc : unsafe extern fn(*mut hashnode),
+-}
+-
+-#[derive(Clone, Copy)]
+-#[repr(C)]
+-pub struct hashlist {
+-    pub list : *mut hashnode,
+-    pub hasharray : [*mut hashnode; 151],
+-    pub next : *mut hashlist,
+-}
++use hash::{hashnode, hashlist, getlist, getnode, delnode, addnode, addnode_at_front};
+ 
+ unsafe extern fn do_push(
+     mut stack : *mut hashlist,
