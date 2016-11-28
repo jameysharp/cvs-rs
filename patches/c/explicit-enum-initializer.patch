@@ -60,3 +60,16 @@ Index: b/src/logmsg.c
  
  struct verifymsg_proc_data
  {
+Index: b/src/admin.c
+===================================================================
+--- a/src/admin.c
++++ b/src/admin.c
+@@ -235,7 +235,7 @@ admin_filesdoneproc (void *callerdat, in
+ static const char short_options[] =
+     "+ib::c:a:A:e::l::u::LUn:N:m:o:s:t::IqxV:k:";
+ 
+-enum {OPT_NONE = 0, OPT_EXECUTE, OPT_NOEXECUTE} opt_values;
++enum {OPT_NONE = 0, OPT_EXECUTE, OPT_NOEXECUTE} opt_values = OPT_NONE;
+ static struct option long_options[] =
+ {
+     {"execute", 0, NULL, OPT_EXECUTE},

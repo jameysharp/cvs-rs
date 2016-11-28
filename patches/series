@@ -1,2 +1,3 @@
 c/explicit-enum-initializer.patch
 c/static-variables-referenced-in-pattern.patch
+c/array-size.patch

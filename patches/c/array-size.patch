@@ -1,0 +1,757 @@
+C has a handy feature where you can omit the size of an array when
+declaring it. The compiler will count how many elements you initialized
+the array with, and make the array exactly big enough for that many
+elements.
+
+Corrode can't handle arrays of unspecified size yet, so this patch
+explicitly sets the sizes of all arrays as a workaround.
+
+Index: b/diff/io.c
+===================================================================
+--- a/diff/io.c
++++ b/diff/io.c
+@@ -622,7 +622,7 @@ find_identical_ends (filevec)
+ /* Largest primes less than some power of two, for nbuckets.  Values range
+    from useful to preposterous.  If one of these numbers isn't prime
+    after all, don't blame it on me, blame it on primes (6) . . . */
+-static int const primes[] =
++static int const primes[24] =
+ {
+   509,
+   1021,
+Index: b/diff/version.c
+===================================================================
+--- a/diff/version.c
++++ b/diff/version.c
+@@ -2,4 +2,4 @@
+ 
+ #include <config.h>
+ 
+-char const diff_version_string[] = "2.7";
++char const diff_version_string[4] = "2.7";
+Index: b/lib/quotearg.c
+===================================================================
+--- a/lib/quotearg.c
++++ b/lib/quotearg.c
+@@ -74,7 +74,7 @@ struct quoting_options
+ };
+ 
+ /* Names of quoting styles.  */
+-char const *const quoting_style_args[] =
++char const *const quoting_style_args[9] =
+ {
+   "literal",
+   "shell",
+Index: b/lib/tempname.c
+===================================================================
+--- a/lib/tempname.c
++++ b/lib/tempname.c
+@@ -179,7 +179,7 @@ __path_search (char *tmpl, size_t tmpl_l
+ #endif /* _LIBC */
+ 
+ /* These are the characters used in temporary file names.  */
+-static const char letters[] =
++static const char letters[63] =
+ "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+ 
+ /* Generate a temporary file name based on TMPL.  TMPL must match the
+Index: b/src/add.c
+===================================================================
+--- a/src/add.c
++++ b/src/add.c
+@@ -248,7 +248,7 @@ out:
+ 
+ 
+ 
+-static const char *const add_usage[] =
++static const char *const add_usage[6] =
+ {
+     "Usage: %s %s [-k rcs-kflag] [-m message] files...\n",
+     "\t-k rcs-kflag\tUse \"rcs-kflag\" to add the file with the specified\n",
+Index: b/src/admin.c
+===================================================================
+--- a/src/admin.c
++++ b/src/admin.c
+@@ -39,7 +39,7 @@ static Dtype admin_dirproc (void *caller
+                             List *entries);
+ static int admin_fileproc (void *callerdat, struct file_info *finfo);
+ 
+-static const char *const admin_usage[] =
++static const char *const admin_usage[43] =
+ {
+     "Usage: %s %s [options] files...\n",
+     "\t-a users   Append (comma-separated) user names to access list.\n",
+@@ -232,11 +232,11 @@ admin_filesdoneproc (void *callerdat, in
+ 
+ 
+ 
+-static const char short_options[] =
++static const char short_options[43] =
+     "+ib::c:a:A:e::l::u::LUn:N:m:o:s:t::IqxV:k:";
+ 
+ enum {OPT_NONE = 0, OPT_EXECUTE, OPT_NOEXECUTE} opt_values = OPT_NONE;
+-static struct option long_options[] =
++static struct option long_options[3] =
+ {
+     {"execute", 0, NULL, OPT_EXECUTE},
+     {"no-execute", 0, NULL, OPT_NOEXECUTE},
+Index: b/src/annotate.c
+===================================================================
+--- a/src/annotate.c
++++ b/src/annotate.c
+@@ -45,7 +45,7 @@ static int rannotate_proc (int argc, cha
+ 				 char *mwhere, char *mfile, int shorten,
+ 				 int local, char *mname, char *msg);
+ 
+-static const char *const annotate_usage[] =
++static const char *const annotate_usage[10] =
+ {
+     "Usage: %s %s [-lRfF] [-r rev] [-D date] [files...]\n",
+     "\t-l\tLocal directory only, no recursion.\n",
+Index: b/src/checkout.c
+===================================================================
+--- a/src/checkout.c
++++ b/src/checkout.c
+@@ -63,7 +63,7 @@ static int checkout_proc (int argc, char
+ 		          int local_specified, char *omodule,
+ 		          char *msg);
+ 
+-static const char *const checkout_usage[] =
++static const char *const checkout_usage[19] =
+ {
+     "Usage:\n  %s %s [-ANPRcflnps] [-r rev] [-D date] [-d dir]\n",
+     "    [-j rev1] [-j rev2] [-k kopt] modules...\n",
+@@ -86,7 +86,7 @@ static const char *const checkout_usage[
+     NULL
+ };
+ 
+-static const char *const export_usage[] =
++static const char *const export_usage[12] =
+ {
+     "Usage: %s %s [-NRfln] [-r tag] [-D date] [-d dir] [-k kopt] module...\n",
+     "\t-N\tDon't shorten module paths if -d specified.\n",
+Index: b/src/commit.c
+===================================================================
+--- a/src/commit.c
++++ b/src/commit.c
+@@ -99,7 +99,7 @@ static char *logfile;
+ static List *mulist;
+ static time_t last_register_time;
+ 
+-static const char *const commit_usage[] =
++static const char *const commit_usage[11] =
+ {
+     "Usage: %s %s [-cRlf] [-m msg | -F logfile] [-r rev] [files...]\n",
+     "\n",
+@@ -373,9 +373,9 @@ commit (int argc, char **argv)
+ 
+ #ifdef SERVER_SUPPORT
+     /* See below for documentation of the `-n' option.  */
+-    const char short_options[] = COMMIT_OPTIONS"n";
++    const char short_options[16] = COMMIT_OPTIONS"n";
+ #else /* !SERVER_SUPPORT */
+-    const char short_options[] = COMMIT_OPTIONS;
++    const char short_options[15] = COMMIT_OPTIONS;
+ #endif /* SERVER_SUPPORT */
+ 
+     memset(&commit_data, 0, sizeof commit_data);
+Index: b/src/cvsrc.c
+===================================================================
+--- a/src/cvsrc.c
++++ b/src/cvsrc.c
+@@ -26,7 +26,7 @@
+ #ifndef	CVSRC_FILENAME
+ #define	CVSRC_FILENAME	".cvsrc"
+ #endif
+-char cvsrc[] = CVSRC_FILENAME;
++char cvsrc[7] = CVSRC_FILENAME;
+ 
+ #define	GROW	10
+ 
+Index: b/src/diff.c
+===================================================================
+--- a/src/diff.c
++++ b/src/diff.c
+@@ -77,7 +77,7 @@ static size_t diff_arg_allocated;
+ static int diff_errors;
+ static bool empty_files;
+ 
+-static const char *const diff_usage[] =
++static const char *const diff_usage[64] =
+ {
+     "Usage: %s %s [-lR] [-k kopt] [format_options]\n",
+     "    [[-r rev1 | -D date1] [-r rev2 | -D date2]] [files...] \n",
+@@ -171,7 +171,7 @@ static const char *const diff_usage[] =
+    recommended" have been removed: --file-label --entire-new-file
+    --ascii --print.  */
+ 
+-static struct option const longopts[] =
++static struct option const longopts[37] =
+ {
+     {"ignore-blank-lines", 0, 0, 'B'},
+     {"context", 2, 0, 143},
+Index: b/src/history.c
+===================================================================
+--- a/src/history.c
++++ b/src/history.c
+@@ -312,7 +312,7 @@ static size_t mod_count;	/* Number of el
+    all, what does "reports" mean?  I think it means that you can only
+    supply one of those options, but "reports" hardly has that meaning in
+    a self-explanatory way.  */
+-static const char *const history_usg[] =
++static const char *const history_usg[23] =
+ {
+     "Usage: %s %s [-report] [-flags] [-options args] [files...]\n\n",
+     "   Reports:\n",
+Index: b/src/import.c
+===================================================================
+--- a/src/import.c
++++ b/src/import.c
+@@ -72,7 +72,7 @@ static int use_file_modtime;
+ static char *keyword_opt = NULL;
+ static bool killnew;
+ 
+-static const char *const import_usage[] =
++static const char *const import_usage[11] =
+ {
+     "Usage: %s %s [-dX] [-k subst] [-I ign] [-m msg] [-b branch]\n",
+     "    [-W spec] repository vendor-tag release-tags...\n",
+Index: b/src/log.c
+===================================================================
+--- a/src/log.c
++++ b/src/log.c
+@@ -167,7 +167,7 @@ static int version_compare (const char *
+ static struct log_data *global_log_data;
+ static int is_rlog;
+ 
+-static const char *const log_usage[] =
++static const char *const log_usage[28] =
+ {
+     "Usage: %s %s [-lRhtNb] [-r[revisions]] [-d dates] [-s states]\n",
+     "    [-w[logins]] [files...]\n",
+Index: b/src/login.c
+===================================================================
+--- a/src/login.c
++++ b/src/login.c
+@@ -512,7 +512,7 @@ error_exit:
+ /* Prompt for a password, and store it in the file "CVS/.cvspass".
+  */
+ 
+-static const char *const login_usage[] =
++static const char *const login_usage[3] =
+ {
+     "Usage: %s %s\n",
+     "(Specify the --help global option for a list of other help options)\n",
+Index: b/src/ls.c
+===================================================================
+--- a/src/ls.c
++++ b/src/ls.c
+@@ -34,7 +34,7 @@ static int ls_proc (int argc, char **arg
+                     char *mfile, int shorten, int local, char *mname,
+                     char *msg);
+ 
+-static const char *const ls_usage[] =
++static const char *const ls_usage[10] =
+ {
+     "Usage: %s %s [-e | -l] [-RP] [-r rev] [-D date] [path...]\n",
+     "\t-d\tShow dead revisions (with tag when specified).\n",
+Index: b/src/main.c
+===================================================================
+--- a/src/main.c
++++ b/src/main.c
+@@ -155,7 +155,7 @@ static const struct cmd
+     
+     int (*func) (int, char **);	/* Function takes (argc, argv) arguments. */
+     unsigned long attr;		/* Attributes. */
+-} cmds[] =
++} cmds[36] =
+ 
+ {
+     { "add",      "ad",       "new",       add,       CVS_CMD_MODIFIES_REPOSITORY | CVS_CMD_USES_WORK_DIR },
+Index: b/src/mkmodules.c
+===================================================================
+--- a/src/mkmodules.c
++++ b/src/mkmodules.c
+@@ -66,7 +66,7 @@ struct admin_file {
+    const char * const *contents;
+ };
+ 
+-static const char *const loginfo_contents[] = {
++static const char *const loginfo_contents[39] = {
+     "# The \"loginfo\" file controls where \"cvs commit\" log information is\n",
+     "# sent. The first entry on a line is a regular expression which must\n",
+     "# match the directory that the change is being made to, relative to the\n",
+@@ -110,7 +110,7 @@ static const char *const loginfo_content
+     NULL
+ };
+ 
+-static const char *const rcsinfo_contents[] = {
++static const char *const rcsinfo_contents[14] = {
+     "# The \"rcsinfo\" file is used to control templates with which the editor\n",
+     "# is invoked on commit and import.\n",
+     "#\n",
+@@ -129,7 +129,7 @@ static const char *const rcsinfo_content
+ 
+ 
+ 
+-static const char *const verifymsg_contents[] = {
++static const char *const verifymsg_contents[32] = {
+     "# The \"verifymsg\" file is used to allow verification of logging\n",
+     "# information.  It works best when a template (as specified in the\n",
+     "# rcsinfo file) is provided for the logging procedure.  Given a\n",
+@@ -166,7 +166,7 @@ static const char *const verifymsg_conte
+     NULL
+ };
+ 
+-static const char *const commitinfo_contents[] = {
++static const char *const commitinfo_contents[27] = {
+     "# The \"commitinfo\" file is used to control pre-commit checks.\n",
+     "# The filter on the right is invoked with the repository and a list \n",
+     "# of files to check.  A non-zero exit of the filter program will \n",
+@@ -198,7 +198,7 @@ static const char *const commitinfo_cont
+     NULL
+ };
+ 
+-static const char *const taginfo_contents[] = {
++static const char *const taginfo_contents[47] = {
+     "# The \"taginfo\" file is used to control pre-tag checks.\n",
+     "# The filter on the right is invoked with the following arguments\n",
+     "# if no format strings are present:\n",
+@@ -250,7 +250,7 @@ static const char *const taginfo_content
+     NULL
+ };
+ 
+-static const char *const preproxy_contents[] = {
++static const char *const preproxy_contents[25] = {
+     "# The \"preproxy\" file is called form the secondary server as soon as\n",
+     "# the secondary server determines that it will be proxying a write\n",
+     "# command to a primary server and immediately before it opens a\n",
+@@ -280,7 +280,7 @@ static const char *const preproxy_conten
+     NULL
+ };
+ 
+-static const char *const postadmin_contents[] = {
++static const char *const postadmin_contents[21] = {
+     "# The \"postadmin\" file is called after the \"admin\" command finishes\n",
+     "# processing a directory.\n",
+     "#\n",
+@@ -306,7 +306,7 @@ static const char *const postadmin_conte
+     NULL
+ };
+ 
+-static const char *const postproxy_contents[] = {
++static const char *const postproxy_contents[23] = {
+     "# The \"postproxy\" file is called from a secondary server as soon as\n",
+     "# the secondary server closes its connection to the primary server.\n",
+     "# This script might, for example, be used to shut down a dial up\n",
+@@ -334,7 +334,7 @@ static const char *const postproxy_conte
+     NULL
+ };
+ 
+-static const char *const posttag_contents[] = {
++static const char *const posttag_contents[38] = {
+     "# The \"posttag\" file is called after the \"tag\" command finishes\n",
+     "# processing a directory.\n",
+     "#\n",
+@@ -377,7 +377,7 @@ static const char *const posttag_content
+     NULL
+ };
+ 
+-static const char *const postwatch_contents[] = {
++static const char *const postwatch_contents[21] = {
+     "# The \"postwatch\" file is called after any command finishes writing new\n",
+     "# file attibute (watch/edit) information in a directory.\n",
+     "#\n",
+@@ -403,7 +403,7 @@ static const char *const postwatch_conte
+     NULL
+ };
+ 
+-static const char *const checkoutlist_contents[] = {
++static const char *const checkoutlist_contents[14] = {
+     "# The \"checkoutlist\" file is used to support additional version controlled\n",
+     "# administrative files in $CVSROOT/CVSROOT, such as template files.\n",
+     "#\n",
+@@ -420,7 +420,7 @@ static const char *const checkoutlist_co
+     NULL
+ };
+ 
+-static const char *const cvswrappers_contents[] = {
++static const char *const cvswrappers_contents[20] = {
+     "# This file affects handling of files based on their names.\n",
+     "#\n",
+ #if 0    /* see comments in wrap_add in wrapper.c */
+@@ -449,7 +449,7 @@ static const char *const cvswrappers_con
+     NULL
+ };
+ 
+-static const char *const notify_contents[] = {
++static const char *const notify_contents[20] = {
+     "# The \"notify\" file controls where notifications from watches set by\n",
+     "# \"cvs watch add\" or \"cvs edit\" are sent.  The first entry on a line is\n",
+     "# a regular expression which is tested against the directory that the\n",
+@@ -474,7 +474,7 @@ static const char *const notify_contents
+     NULL
+ };
+ 
+-static const char *const modules_contents[] = {
++static const char *const modules_contents[26] = {
+     "# Three different line formats are valid:\n",
+     "#	key	-a    aliases...\n",
+     "#	key [options] directory\n",
+@@ -503,7 +503,7 @@ static const char *const modules_content
+     NULL
+ };
+ 
+-static const char *const config_contents[] = {
++static const char *const config_contents[109] = {
+     "# Set `SystemAuth' to `no' if pserver shouldn't check system users/passwords.\n",
+     "#SystemAuth=yes\n",
+     "\n",
+@@ -621,7 +621,7 @@ static const char *const config_contents
+     NULL
+ };
+ 
+-static const struct admin_file filelist[] = {
++static const struct admin_file filelist[19] = {
+     {CVSROOTADM_CHECKOUTLIST,
+ 	"a %s file can specify extra CVSROOT files to auto-checkout",
+ 	checkoutlist_contents},
+@@ -1193,7 +1193,7 @@ in_repository (const char *path)
+ }
+ 
+ 
+-const char *const init_usage[] = {
++const char *const init_usage[3] = {
+     "Usage: %s %s\n",
+     "(Specify the --help global option for a list of other help options)\n",
+     NULL
+Index: b/src/parseinfo.c
+===================================================================
+--- a/src/parseinfo.c
++++ b/src/parseinfo.c
+@@ -385,7 +385,7 @@ parse_error (const char *infopath, unsig
+ 
+ 
+ #ifdef ALLOW_CONFIG_OVERRIDE
+-const char * const allowed_config_prefixes[] = { ALLOW_CONFIG_OVERRIDE };
++const char * const allowed_config_prefixes[3] = { ALLOW_CONFIG_OVERRIDE };
+ #endif /* ALLOW_CONFIG_OVERRIDE */
+ 
+ 
+Index: b/src/patch.c
+===================================================================
+--- a/src/patch.c
++++ b/src/patch.c
+@@ -54,7 +54,7 @@ static char *tmpfile2 = NULL;
+ static char *tmpfile3 = NULL;
+ static int unidiff = 0;
+ 
+-static const char *const patch_usage[] =
++static const char *const patch_usage[14] =
+ {
+     "Usage: %s %s [-flR] [-c|-u] [-s|-t] [-k kopt]\n",
+     "                 {-r rev | -D date} [-r rev2 | -D date2] modules...\n",
+Index: b/src/rcs.c
+===================================================================
+--- a/src/rcs.c
++++ b/src/rcs.c
+@@ -54,7 +54,7 @@ void *my_mmap(void *addr, size_t len, in
+ /* The RCS -k options, and a set of enums that must match the array.
+    These come first so that we can use enum kflag in function
+    prototypes.  */
+-static const char *const kflags[] =
++static const char *const kflags[7] =
+   {"kv", "kvl", "k", "v", "o", "b", NULL};
+ enum kflag { KFLAG_KV = 0, KFLAG_KVL, KFLAG_K, KFLAG_V, KFLAG_O, KFLAG_B };
+ 
+@@ -162,7 +162,7 @@ static char * getfullCVSname (char *, ch
+  * 2. isspace is an very expensive function call in some implementations
+  *    due to the addition of wide character support.
+  */
+-static const char spacetab[] = {
++static const char spacetab[256] = {
+         0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0,	/* 0x00 - 0x0f */
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x10 - 0x1f */
+         1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x20 - 0x2f */
+@@ -3350,7 +3350,7 @@ translate_symtag (RCSNode *rcs, const ch
+ char *
+ RCS_check_kflag (const char *arg)
+ {
+-    static const char *const  keyword_usage[] =
++    static const char *const  keyword_usage[10] =
+     {
+       "%s %s: invalid RCS keyword expansion mode\n",
+       "Valid expansion modes include:\n",
+Index: b/src/release.c
+===================================================================
+--- a/src/release.c
++++ b/src/release.c
+@@ -34,7 +34,7 @@
+ 
+ 
+ 
+-static const char *const release_usage[] =
++static const char *const release_usage[4] =
+ {
+     "Usage: %s %s [-d] directories...\n",
+     "\t-d\tDelete the given directory.\n",
+Index: b/src/remove.c
+===================================================================
+--- a/src/remove.c
++++ b/src/remove.c
+@@ -50,7 +50,7 @@ static int local;
+ static int removed_files;
+ static int existing_files;
+ 
+-static const char *const remove_usage[] =
++static const char *const remove_usage[6] =
+ {
+     "Usage: %s %s [-flR] [files...]\n",
+     "\t-f\tDelete the file before removing it.\n",
+Index: b/src/root.c
+===================================================================
+--- a/src/root.c
++++ b/src/root.c
+@@ -40,7 +40,7 @@
+ /* Printable names for things in the current_parsed_root->method enum variable.
+    Watch out if the enum is changed in cvs.h! */
+ 
+-const char method_names[][16] = {
++const char method_names[9][16] = {
+     "undefined", "local", "server (rsh)", "pserver",
+     "kserver", "gserver", "ext", "extssh", "fork"
+ };
+Index: b/src/scramble.c
+===================================================================
+--- a/src/scramble.c
++++ b/src/scramble.c
+@@ -54,7 +54,7 @@
+  */
+ 
+ static unsigned char
+-shifts[] = {
++shifts[256] = {
+     0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+    16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+   114,120, 53, 79, 96,109, 72,108, 70, 64, 76, 67,116, 74, 68, 87,
+Index: b/src/sign.c
+===================================================================
+--- a/src/sign.c
++++ b/src/sign.c
+@@ -532,7 +532,7 @@ sign_fileproc (void *callerdat, struct f
+ 
+ 
+ 
+-static const char *const sign_usage[] =
++static const char *const sign_usage[8] =
+ {
+     "Usage: %s %s [-lR] [-d KEYID [-r TAG]] [files...]\n",
+     "\t-l\tProcess this directory only (not recursive).\n",
+Index: b/src/status.c
+===================================================================
+--- a/src/status.c
++++ b/src/status.c
+@@ -37,7 +37,7 @@ static int local = 0;
+ static int long_format = 0;
+ static RCSNode *xrcsnode;
+ 
+-static const char *const status_usage[] =
++static const char *const status_usage[6] =
+ {
+     "Usage: %s %s [-vlR] [files...]\n",
+     "\t-v\tVerbose format; includes tag information for the file\n",
+Index: b/src/tag.c
+===================================================================
+--- a/src/tag.c
++++ b/src/tag.c
+@@ -85,8 +85,8 @@ struct master_lists
+ 
+ static List *mtlist;
+ 
+-static const char rtag_opts[] = "+aBbdFflnQqRr:D:";
+-static const char *const rtag_usage[] =
++static const char rtag_opts[17] = "+aBbdFflnQqRr:D:";
++static const char *const rtag_usage[14] =
+ {
+     "Usage: %s %s [-aBbdFflnR] [-r rev|-D date] tag modules...\n",
+     "\t-a\tClear tag from removed files that would not otherwise be tagged.\n",
+@@ -104,8 +104,8 @@ static const char *const rtag_usage[] =
+     NULL
+ };
+ 
+-static const char tag_opts[] = "+BbcdFflQqRr:D:";
+-static const char *const tag_usage[] =
++static const char tag_opts[16] = "+BbcdFflQqRr:D:";
++static const char *const tag_usage[13] =
+ {
+     "Usage: %s %s [-bcdFflR] [-r rev|-D date] tag [files...]\n",
+     "\t-B\tAllows -F and -d to disturb branch tags.  Use with extreme care.\n",
+Index: b/src/update.c
+===================================================================
+--- a/src/update.c
++++ b/src/update.c
+@@ -132,7 +132,7 @@ static bool rcs_diff_patches;
+ #endif
+ static List *ignlist = NULL;
+ static time_t last_register_time;
+-static const char *const update_usage[] =
++static const char *const update_usage[18] =
+ {
+     "Usage: %s %s [-APCdflRp] [-k kopt] [-r rev] [-D date] [-j rev]\n",
+     "    [-I ign] [-W spec] [files...]\n",
+Index: b/src/verify.c
+===================================================================
+--- a/src/verify.c
++++ b/src/verify.c
+@@ -467,7 +467,7 @@ done:
+ 
+ 
+ 
+-static const char *const verify_usage[] =
++static const char *const verify_usage[6] =
+ {
+     "Usage: %s %s [-lpR] [path...]\n",
+     "\t-l\tLocal directory only, no recursion.\n",
+Index: b/src/version.c
+===================================================================
+--- a/src/version.c
++++ b/src/version.c
+@@ -21,7 +21,7 @@
+ 
+ #include "cvs.h"
+ 
+-static const char *const version_usage[] =
++static const char *const version_usage[2] =
+ {
+     "Usage: %s %s\n",
+     NULL
+Index: b/src/watch.c
+===================================================================
+--- a/src/watch.c
++++ b/src/watch.c
+@@ -32,7 +32,7 @@
+ 
+ 
+ 
+-const char *const watch_usage[] =
++const char *const watch_usage[14] =
+ {
+     "Usage: %s %s {on|off|add|remove} [-lR] [-a action]... [-u user]\n",
+     "                 [<path>]...\n",
+@@ -485,7 +485,7 @@ watch (int argc, char **argv)
+     return 0;
+ }
+ 
+-static const char *const watchers_usage[] =
++static const char *const watchers_usage[5] =
+ {
+     "Usage: %s %s [-lR] [<file>]...\n",
+     "-l\tProcess this directory only (not recursive).\n",
+Index: b/src/cvs.h
+===================================================================
+--- a/src/cvs.h
++++ b/src/cvs.h
+@@ -380,9 +380,9 @@ int SIG_register (int sig, SIGCLEANUPPRO
+ #include "filesubr.h"
+ #include "subr.h"
+ 
+-int ls (int argc, char *argv[]);
++int ls (int argc, char **argv);
+ 
+-int update (int argc, char *argv[]);
++int update (int argc, char **argv);
+ /* The only place this is currently used outside of update.c is add.c.
+  * Restricting its use to update.c seems to be in the best interest of
+  * modularity, but I can't think of a good way to get an update of a
+@@ -434,7 +434,7 @@ void Update_Logfile (const char *reposit
+ void do_editor (const char *dir, char **messagep,
+                 const char *repository, List *changes);
+ 
+-typedef	int (*CALLBACKPROC)	(int argc, char *argv[], char *where,
++typedef	int (*CALLBACKPROC)	(int argc, char **argv, char *where,
+ 	char *mwhere, char *mfile, int shorten, int local_specified,
+ 	char *omodule, char *msg);
+ 
+Index: b/src/recurse.h
+===================================================================
+--- a/src/recurse.h
++++ b/src/recurse.h
+@@ -61,7 +61,7 @@ typedef	int (*DIRLEAVEPROC) (void *calle
+ 
+ int start_recursion (FILEPROC fileproc, FILESDONEPROC filesdoneproc,
+ 		     DIRENTPROC direntproc, DIRLEAVEPROC dirleaveproc,
+-		     void *callerdat, int argc, char *argv[], int local,
++		     void *callerdat, int argc, char **argv, int local,
+ 		     int which, int aflag, enum cvs_lock_type locktype,
+ 		     const char *update_preload, int dosrcs,
+ 		     const char *repository);
+Index: b/src/subr.h
+===================================================================
+--- a/src/subr.h
++++ b/src/subr.h
+@@ -46,7 +46,7 @@ char *Xreadlink (const char *link, size_
+ void xrealloc_and_strcat (char **, size_t *, const char *);
+ int strip_trailing_newlines (char *str);
+ int pathname_levels (const char *path);
+-void free_names (int *pargc, char *argv[]);
++void free_names (int *pargc, char **argv);
+ void line2argv (int *pargc, char ***argv, char *line, char *sepchars);
+ int numdots (const char *s);
+ int compare_revnums (const char *, const char *);
+Index: b/src/watch.h
+===================================================================
+--- a/src/watch.h
++++ b/src/watch.h
+@@ -10,7 +10,7 @@
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.  */
+ 
+-extern const char *const watch_usage[];
++extern const char *const watch_usage[14];
+ 
+ /* Flags to pass between the various functions making up the
+    add/remove code.  All in a single structure in case there is some
+Index: b/src/edit.c
+===================================================================
+--- a/src/edit.c
++++ b/src/edit.c
+@@ -479,7 +479,7 @@ edit_fileproc (void *callerdat, struct f
+     return 0;
+ }
+ 
+-static const char *const edit_usage[] =
++static const char *const edit_usage[9] =
+ {
+     "Usage: %s %s [-lRcf] [-a <action>]... [<file>]...\n",
+     "-l\tLocal directory only, not recursive.\n",
+@@ -753,7 +753,7 @@ unedit_fileproc (void *callerdat, struct
+     return 0;
+ }
+ 
+-static const char *const unedit_usage[] =
++static const char *const unedit_usage[5] =
+ {
+     "Usage: %s %s [-lR] [<file>]...\n",
+     "-l\tLocal directory only, not recursive.\n",
+@@ -1209,7 +1209,7 @@ cvs_notify_check (const char *repository
+ #endif /* CLIENT_SUPPORT */
+ 
+ 
+-static const char *const editors_usage[] =
++static const char *const editors_usage[5] =
+ {
+     "Usage: %s %s [-lR] [<file>]...\n",
+     "-l\tProcess this directory only (not recursive).\n",
+Index: b/src/update.h
+===================================================================
+--- a/src/update.h
++++ b/src/update.h
+@@ -10,7 +10,7 @@
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.  */
+ 
+-int do_update (int argc, char *argv[], char *xoptions, char *xtag,
++int do_update (int argc, char **argv, char *xoptions, char *xtag,
+ 	       char *xdate, int xforce, int local, int xbuild,
+ 	       int xaflag, int xprune, int xpipeout, int which,
+ 	       char *xjoin_rev1, char *xjoin_date1,
