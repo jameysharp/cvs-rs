@@ -1,0 +1,57 @@
+CVS includes quite a bit of code for runtime debugging by tracing the
+operations it performs. That code is not necessary for regular use;
+includes idioms that are difficult to translate to Rust; and clutters
+the generated source, making it more difficult to maintain.
+
+This patch uses the C pre-processor to strip out all tracing code before
+translating to Rust.
+
+Index: b/src/hash.c
+===================================================================
+--- a/src/hash.c
++++ b/src/hash.c
+@@ -525,7 +525,7 @@ fsortcmp (const Node *p, const Node *q)
+ 
+ /* Debugging functions.  Quite useful to call from within gdb. */
+ 
+-
++#if 0
+ static char *
+ nodetypestring (Ntype type)
+ {
+@@ -593,3 +593,4 @@ printlist (List *list)
+ 
+     return;
+ }
++#endif
+Index: b/src/server.h
+===================================================================
+--- a/src/server.h
++++ b/src/server.h
+@@ -240,7 +240,7 @@ enum trace_level
+ extern enum trace_level trace;		/* User defined trace level.  */
+ void cvs_trace (enum trace_level level, const char *fmt, ...)
+   __attribute__ ((__format__ (__printf__, 2, 3)));
+-#define TRACE cvs_trace
++#define TRACE(level, fmt, ...)
+ 
+ static inline const char *
+ cvs_trace_ptr (void *ptr_in, unsigned short int index)
+Index: b/src/find_names.c
+===================================================================
+--- a/src/find_names.c
++++ b/src/find_names.c
+@@ -392,11 +392,13 @@ Find_Directories (const char *repository
+     /* sort the list into alphabetical order and return it */
+     sortlist (dirlist, fsortcmp);
+ 
++#if 0
+     if (trace >= TRACE_MINUTIA)
+     {
+ 	TRACE (TRACE_MINUTIA, "Find_Directories returning dirlist:");
+ 	printlist (dirlist);
+     }
++#endif
+     return dirlist;
+ }
+ 
