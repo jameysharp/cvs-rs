@@ -20,4 +20,7 @@ else
 	./config.status
 fi
 
+PATH="`pwd`/.cabal-sandbox/bin:$PATH" make -C src rust-sources
+quilt push -a
+
 PATH="`pwd`/.cabal-sandbox/bin:$PATH" make

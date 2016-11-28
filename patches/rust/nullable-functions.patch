@@ -1,0 +1,75 @@
+In Rust, function pointers are not allowed to be null. If you want
+nullable function pointers, you need to wrap them in `Option<>`. This
+isn't a problem for FFI/ABI compatibility because of Rust's
+"null-pointer optimization":
+
+<https://doc.rust-lang.org/nomicon/repr-rust.html>
+
+Corrode ought to generate `Option`-wrapped types everywhere that C
+function pointers are used, but it doesn't yet. That's being tracked
+here:
+
+<https://github.com/jameysharp/corrode/issues/77>
+
+Index: b/src/hash.rs
+===================================================================
+--- a/src/hash.rs
++++ b/src/hash.rs
+@@ -54,7 +54,7 @@ pub struct hashnode {
+     pub key : *mut u8,
+     pub data : *mut ::std::os::raw::c_void,
+     pub len : usize,
+-    pub delproc : unsafe extern fn(*mut hashnode),
++    pub delproc : Option<unsafe extern fn(*mut hashnode)>,
+ }
+ 
+ #[derive(Clone, Copy)]
+@@ -221,8 +221,8 @@ pub unsafe extern fn delnode(mut p : *mu
+ }
+ 
+ unsafe extern fn freenode_mem(mut p : *mut hashnode) {
+-    if (*p).delproc as (*mut ::std::os::raw::c_void) != 0i32 as (*mut ::std::os::raw::c_void) {
+-        ((*p).delproc)(p as (*mut hashnode));
++    if let Some(delproc) = (*p).delproc {
++        delproc(p as (*mut hashnode));
+     } else if (*p).data != 0i32 as (*mut ::std::os::raw::c_void) {
+         free((*p).data);
+     }
+@@ -233,7 +233,7 @@ unsafe extern fn freenode_mem(mut p : *m
+                    (*p).data = 0i32 as (*mut ::std::os::raw::c_void);
+                    (*p).data
+                } as (*mut u8);
+-    (*p).delproc = 0i32 as (*mut ::std::os::raw::c_void) as (unsafe extern fn(*mut hashnode));
++    (*p).delproc = None;
+ }
+ 
+ #[no_mangle]
+@@ -473,8 +473,8 @@ pub unsafe extern fn list_isempty(mut li
+ }
+ 
+ static mut client_comp
+-    : unsafe extern fn(*const hashnode, *const hashnode) -> i32
+-    = 0 as (unsafe extern fn(*const hashnode, *const hashnode) -> i32);
++    : Option<unsafe extern fn(*const hashnode, *const hashnode) -> i32>
++    = None;
+ 
+ unsafe extern fn xnmalloc(
+     mut n : usize, mut s : usize
+@@ -498,7 +498,7 @@ unsafe extern fn qsort_comp(
+ ) -> i32 {
+     let mut node1 : *mut *mut hashnode = elem1 as (*mut *mut hashnode);
+     let mut node2 : *mut *mut hashnode = elem2 as (*mut *mut hashnode);
+-    client_comp(
++    client_comp.unwrap()(
+         *node1 as (*const hashnode),
+         *node2 as (*const hashnode)
+     )
+@@ -510,7 +510,7 @@ pub unsafe extern fn sortlist(
+     mut
+     comp
+     :
+-    unsafe extern fn(*const hashnode, *const hashnode) -> i32
++    Option<unsafe extern fn(*const hashnode, *const hashnode) -> i32>
+ ) {
+     let mut head : *mut hashnode;
+     let mut remain : *mut hashnode;

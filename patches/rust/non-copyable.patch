@@ -1,0 +1,19 @@
+Rust currently only provides implementations of the `Copy` and `Clone`
+traits for arrays up to a certain size. Any type that contains larger
+arrays can't have these traits automatically derived for it.
+
+Fortunately, this code base doesn't actually try to copy such large
+structures, so we can just delete the trait-deriving annotation.
+
+Index: b/src/hash.rs
+===================================================================
+--- a/src/hash.rs
++++ b/src/hash.rs
+@@ -57,7 +57,6 @@ pub struct hashnode {
+     pub delproc : Option<unsafe extern fn(*mut hashnode)>,
+ }
+ 
+-#[derive(Clone, Copy)]
+ #[repr(C)]
+ pub struct hashlist {
+     pub list : *mut hashnode,
