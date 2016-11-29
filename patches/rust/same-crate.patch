@@ -67,3 +67,57 @@ Index: b/src/stack.rs
  
  unsafe extern fn do_push(
      mut stack : *mut hashlist,
+Index: b/src/checkin.rs
+===================================================================
+--- a/src/checkin.rs
++++ b/src/checkin.rs
+@@ -110,48 +110,7 @@ extern {
+ enum buffer {
+ }
+ 
+-#[derive(Clone, Copy)]
+-#[repr(i32)]
+-pub enum ntype {
+-    NT_UNKNOWN,
+-    HEADER,
+-    ENTRIES,
+-    FILES,
+-    LIST,
+-    RCSNODE,
+-    RCSVERS,
+-    DIRS,
+-    UPDATE,
+-    LOCK,
+-    NDBMNODE,
+-    FILEATTR,
+-    VARIABLE,
+-    RCSFIELD,
+-    RCSCMPFLD,
+-    RCSSTRING,
+-}
+-
+-#[derive(Clone, Copy)]
+-#[repr(C)]
+-pub struct hashnode {
+-    pub type_ : ntype,
+-    pub next : *mut hashnode,
+-    pub prev : *mut hashnode,
+-    pub hashnext : *mut hashnode,
+-    pub hashprev : *mut hashnode,
+-    pub key : *mut u8,
+-    pub data : *mut ::std::os::raw::c_void,
+-    pub len : usize,
+-    pub delproc : unsafe extern fn(*mut hashnode),
+-}
+-
+-#[derive(Clone, Copy)]
+-#[repr(C)]
+-pub struct hashlist {
+-    pub list : *mut hashnode,
+-    pub hasharray : [*mut hashnode; 151],
+-    pub next : *mut hashlist,
+-}
++use hash::hashlist;
+ 
+ #[derive(Clone, Copy)]
+ #[repr(C)]

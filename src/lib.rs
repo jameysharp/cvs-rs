@@ -1,3 +1,4 @@
+pub mod checkin;
 pub mod exithandle;
 pub mod hardlink;
 pub mod hash;
