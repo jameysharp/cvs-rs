@@ -43,7 +43,7 @@ Index: b/src/Makefile.am
  	recurse.c recurse.h \
  	release.c \
  	remove.c \
-@@ -78,10 +73,9 @@ cvs_SOURCES = \
+@@ -78,17 +73,16 @@ cvs_SOURCES = \
  	root.c \
  	rsh-client.c rsh-client.h \
  	run.c run.h \
@@ -55,7 +55,15 @@ Index: b/src/Makefile.am
  	status.c \
  	subr.c subr.h \
  	tag.c \
-@@ -107,15 +101,36 @@ cvs_SOURCES = \
+ 	update.c \
+ 	verify.c verify.h \
+ 	version.c \
+-	vers_ts.c vers_ts.h \
++	vers_ts.h \
+ 	watch.c \
+ 	wrapper.c wrapper.h \
+ 	zlib.c \
+@@ -107,15 +101,37 @@ cvs_SOURCES = \
  	update.h \
  	watch.h
  
@@ -66,7 +74,8 @@ Index: b/src/Makefile.am
 +	hash.rs \
 +	rcscmds.rs \
 +	scramble.rs \
-+	stack.rs
++	stack.rs \
++	vers_ts.rs
 +
 +%.rs: CC=corrode
 +%.rs: %.c

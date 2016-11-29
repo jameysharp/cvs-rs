@@ -7,3 +7,4 @@ rust/same-crate.patch
 rust/fix-loops.patch
 rust/nullable-functions.patch
 rust/non-copyable.patch
+rust/uninitialized.patch

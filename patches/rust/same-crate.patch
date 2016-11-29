@@ -71,10 +71,36 @@ Index: b/src/checkin.rs
 ===================================================================
 --- a/src/checkin.rs
 +++ b/src/checkin.rs
-@@ -110,48 +110,7 @@ extern {
- enum buffer {
+@@ -32,14 +32,6 @@ extern {
+         date : *const u8,
+         ts_conflict : *const u8
+     );
+-    fn Version_TS(
+-        finfo : *mut file_info,
+-        options : *const u8,
+-        tag : *const u8,
+-        date : *const u8,
+-        force_tag_match : i32,
+-        set_time : i32
+-    ) -> *mut vers_ts;
+     fn __assert_fail(
+         __assertion : *const u8,
+         __file : *const u8,
+@@ -73,7 +65,6 @@ extern {
+         filename : *const u8, attrname : *const u8
+     ) -> *mut u8;
+     fn free(__ptr : *mut ::std::os::raw::c_void);
+-    fn freevers_ts(versp : *mut *mut vers_ts);
+     fn history_write(
+         type_ : i32,
+         update_dir : *const u8,
+@@ -107,121 +98,10 @@ extern {
+     fn xchmod(fname : *const u8, writable : bool);
  }
  
+-enum buffer {
+-}
+-
 -#[derive(Clone, Copy)]
 -#[repr(i32)]
 -pub enum ntype {
@@ -117,7 +143,152 @@ Index: b/src/checkin.rs
 -    pub hasharray : [*mut hashnode; 151],
 -    pub next : *mut hashlist,
 -}
+-
+-#[derive(Clone, Copy)]
+-#[repr(C)]
+-pub struct rcsnode {
+-    pub refcount : i32,
+-    pub flags : i32,
+-    pub path : *mut u8,
+-    pub print_path : *mut u8,
+-    pub head : *mut u8,
+-    pub branch : *mut u8,
+-    pub symbols_data : *mut u8,
+-    pub expand : *mut u8,
+-    pub symbols : *mut hashlist,
+-    pub versions : *mut hashlist,
+-    pub access : *mut u8,
+-    pub locks_data : *mut u8,
+-    pub locks : *mut hashlist,
+-    pub strict_locks : i32,
+-    pub comment : *mut u8,
+-    pub desc : *mut u8,
+-    pub delta_pos : isize,
+-    pub other : *mut hashlist,
+-}
+-
+-#[derive(Clone, Copy)]
+-#[repr(C)]
+-pub struct file_info {
+-    pub file : *const u8,
+-    pub update_dir : *const u8,
+-    pub fullname : *const u8,
+-    pub repository : *const u8,
+-    pub entries : *mut hashlist,
+-    pub rcs : *mut rcsnode,
+-}
 +use hash::hashlist;
++use vers_ts::{file_info, rcsnode, vers_ts, Version_TS, freevers_ts};
+ 
+-#[derive(Clone, Copy)]
+-#[repr(i32)]
+-pub enum ent_type {
+-    ENT_FILE,
+-    ENT_SUBDIR,
+-}
+-
+-#[derive(Clone, Copy)]
+-#[repr(C)]
+-pub struct entnode {
+-    pub type_ : ent_type,
+-    pub user : *mut u8,
+-    pub version : *mut u8,
+-    pub timestamp : *mut u8,
+-    pub options : *mut u8,
+-    pub tag : *mut u8,
+-    pub date : *mut u8,
+-    pub conflict : *mut u8,
+-}
+-
+-#[derive(Clone, Copy)]
+-#[repr(C)]
+-pub struct vers_ts {
+-    pub vn_user : *mut u8,
+-    pub vn_rcs : *mut u8,
+-    pub vn_tag : *mut u8,
+-    pub ts_user : *mut u8,
+-    pub ts_rcs : *mut u8,
+-    pub options : *mut u8,
+-    pub ts_conflict : *mut u8,
+-    pub tag : *mut u8,
+-    pub date : *mut u8,
+-    pub nonbranch : i32,
+-    pub entdata : *mut entnode,
+-    pub srcfile : *mut rcsnode,
++enum buffer {
+ }
+ 
+ unsafe extern fn streq(
+Index: b/src/vers_ts.rs
+===================================================================
+--- a/src/vers_ts.rs
++++ b/src/vers_ts.rs
+@@ -25,9 +25,6 @@ extern {
+     fn error(
+         __status : i32, __errnum : i32, __format : *const u8, ...
+     );
+-    fn findnode_fn(
+-        list : *mut hashlist, key : *const u8
+-    ) -> *mut hashnode;
+     fn free(__ptr : *mut ::std::os::raw::c_void);
+     fn freercsnode(rnodep : *mut *mut rcsnode);
+     fn gmtime(__timer : *const isize) -> *mut tm;
+@@ -47,6 +44,8 @@ extern {
+     fn xmalloc(s : usize) -> *mut ::std::os::raw::c_void;
+ }
+ 
++use hash::{hashnode, hashlist, findnode_fn};
++
+ #[derive(Clone, Copy)]
+ #[repr(i32)]
+ pub enum ent_type {
+@@ -68,49 +67,6 @@ pub struct entnode {
+ }
  
  #[derive(Clone, Copy)]
+-#[repr(i32)]
+-pub enum ntype {
+-    NT_UNKNOWN,
+-    HEADER,
+-    ENTRIES,
+-    FILES,
+-    LIST,
+-    RCSNODE,
+-    RCSVERS,
+-    DIRS,
+-    UPDATE,
+-    LOCK,
+-    NDBMNODE,
+-    FILEATTR,
+-    VARIABLE,
+-    RCSFIELD,
+-    RCSCMPFLD,
+-    RCSSTRING,
+-}
+-
+-#[derive(Clone, Copy)]
+-#[repr(C)]
+-pub struct hashnode {
+-    pub type_ : ntype,
+-    pub next : *mut hashnode,
+-    pub prev : *mut hashnode,
+-    pub hashnext : *mut hashnode,
+-    pub hashprev : *mut hashnode,
+-    pub key : *mut u8,
+-    pub data : *mut ::std::os::raw::c_void,
+-    pub len : usize,
+-    pub delproc : unsafe extern fn(*mut hashnode),
+-}
+-
+-#[derive(Clone, Copy)]
+-#[repr(C)]
+-pub struct hashlist {
+-    pub list : *mut hashnode,
+-    pub hasharray : [*mut hashnode; 151],
+-    pub next : *mut hashlist,
+-}
+-
+-#[derive(Clone, Copy)]
  #[repr(C)]
+ pub struct rcsnode {
+     pub refcount : i32,
