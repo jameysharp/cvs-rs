@@ -4,5 +4,6 @@ c/array-size.patch
 c/no-tracing.patch
 build.patch
 rust/same-crate.patch
+rust/fix-loops.patch
 rust/nullable-functions.patch
 rust/non-copyable.patch
