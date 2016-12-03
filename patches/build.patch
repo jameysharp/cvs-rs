@@ -85,7 +85,7 @@ Index: b/src/Makefile.am
 +rust-sources: $(RUST_SOURCES)
 +
 +libcvs-rs.a: lib.rs $(RUST_SOURCES)
-+	rustc -A bad-style -A unused-mut --crate-type=staticlib -o $@ $<
++	rustc -A bad-style -A unused-mut -g -O -C debug-assertions=on --crate-type=staticlib -o $@ $<
 +
  EXTRA_cvs_SOURCES = gssapi-client.c gssapi-client.h \
                      kerberos4-client.c kerberos4-client.h \
