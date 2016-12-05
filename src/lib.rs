@@ -1,5 +1,6 @@
 pub mod checkin;
 pub mod exithandle;
+pub mod fileattr;
 pub mod hardlink;
 pub mod hash;
 pub mod rcscmds;

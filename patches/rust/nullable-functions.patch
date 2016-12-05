@@ -73,3 +73,43 @@ Index: b/src/hash.rs
  ) {
      let mut head : *mut hashnode;
      let mut remain : *mut hashnode;
+Index: b/src/fileattr.rs
+===================================================================
+--- a/src/fileattr.rs
++++ b/src/fileattr.rs
+@@ -223,7 +223,7 @@ unsafe extern fn fileattr_read() {
+                              } = b'\0';
+                             newnode = getnode();
+                             (*newnode).type_ = ntype::FILEATTR;
+-                            (*newnode).delproc = fileattr_delproc as (unsafe extern fn(*mut hashnode));
++                            (*newnode).delproc = Some(fileattr_delproc);
+                             (*newnode).key = Xstrdup(
+                                                  line.offset(1i32 as (isize)) as (*const u8)
+                                              );
+@@ -565,7 +565,7 @@ pub unsafe extern fn fileattr_set(
+             } else {
+                 node = getnode();
+                 (*node).type_ = ntype::FILEATTR;
+-                (*node).delproc = fileattr_delproc as (unsafe extern fn(*mut hashnode));
++                (*node).delproc = Some(fileattr_delproc);
+                 (*node).key = Xstrdup(filename);
+                 (*node).data = Xasprintf(
+                                    (*b"%s=%s\0").as_ptr(),
+@@ -641,7 +641,7 @@ pub unsafe extern fn fileattr_setall(
+             if attrs != 0i32 as (*mut ::std::os::raw::c_void) as (*const u8) {
+                 node = getnode();
+                 (*node).type_ = ntype::FILEATTR;
+-                (*node).delproc = fileattr_delproc as (unsafe extern fn(*mut hashnode));
++                (*node).delproc = Some(fileattr_delproc);
+                 (*node).key = Xstrdup(filename);
+                 (*node).data = Xstrdup(attrs) as (*mut ::std::os::raw::c_void);
+                 addnode(attrlist,node);
+@@ -669,7 +669,7 @@ pub unsafe extern fn fileattr_newfile(mu
+         }
+         node = getnode();
+         (*node).type_ = ntype::FILEATTR;
+-        (*node).delproc = fileattr_delproc as (unsafe extern fn(*mut hashnode));
++        (*node).delproc = Some(fileattr_delproc);
+         (*node).key = Xstrdup(filename);
+         (*node).data = Xstrdup(
+                            fileattr_default_attrs as (*const u8)

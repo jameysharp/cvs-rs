@@ -292,3 +292,115 @@ Index: b/src/vers_ts.rs
  #[repr(C)]
  pub struct rcsnode {
      pub refcount : i32,
+Index: b/src/fileattr.rs
+===================================================================
+--- a/src/fileattr.rs
++++ b/src/fileattr.rs
+@@ -19,23 +19,17 @@ extern {
+     );
+     fn __errno_location() -> *mut i32;
+     fn abs(__x : i32) -> i32;
+-    fn addnode(list : *mut hashlist, p : *mut hashnode) -> i32;
+     static mut current_parsed_root : *mut cvsroot_s;
+     static mut cvs_cmd_name : *const u8;
+     fn cvs_mkdir(
+         name : *const u8, update_dir : *const u8, flags : u32
+     ) -> bool;
+     static mut cvsumask : u32;
+-    fn dellist(listp : *mut *mut hashlist);
+-    fn delnode(p : *mut hashnode);
+     fn error(
+         __status : i32, __errnum : i32, __format : *const u8, ...
+     );
+     fn fclose(__stream : *mut _IO_FILE) -> i32;
+     fn ferror_unlocked(__stream : *mut _IO_FILE) -> i32;
+-    fn findnode(
+-        list : *mut hashlist, key : *const u8
+-    ) -> *mut hashnode;
+     fn fopen(
+         __filename : *const u8, __modes : *const u8
+     ) -> *mut _IO_FILE;
+@@ -51,16 +45,12 @@ extern {
+         __s : *const u8, __stream : *mut _IO_FILE
+     ) -> i32;
+     fn free(__ptr : *mut ::std::os::raw::c_void);
+-    fn freenode(p : *mut hashnode);
+     fn getline(
+         __lineptr : *mut *mut u8,
+         __n : *mut usize,
+         __stream : *mut _IO_FILE
+     ) -> isize;
+-    fn getlist() -> *mut hashlist;
+-    fn getnode() -> *mut hashnode;
+     fn isdir(file : *const u8) -> bool;
+-    fn list_isempty(list : *mut hashlist) -> i32;
+     static mut noexec : i32;
+     fn primary_root_inverse_translate(
+         root_in : *const u8
+@@ -81,64 +71,16 @@ extern {
+     ) -> *mut u8;
+     fn umask(__mask : u32) -> u32;
+     fn unlink_file(f : *const u8) -> i32;
+-    fn walklist(
+-        list : *mut hashlist,
+-        arg2
+-        :
+-        unsafe extern fn(*mut hashnode, *mut ::std::os::raw::c_void) -> i32,
+-        closure : *mut ::std::os::raw::c_void
+-    ) -> i32;
+     fn xmalloc(s : usize) -> *mut ::std::os::raw::c_void;
+ }
+ 
++use hash::{ntype, hashnode, hashlist, addnode, dellist, delnode, findnode, freenode, getlist, getnode, list_isempty, walklist};
++
+ enum _IO_FILE {
+ }
+ 
+ static mut fileattr_stored_repos : *mut u8 = 0 as (*mut u8);
+ 
+-#[derive(Clone, Copy)]
+-#[repr(i32)]
+-pub enum ntype {
+-    NT_UNKNOWN,
+-    HEADER,
+-    ENTRIES,
+-    FILES,
+-    LIST,
+-    RCSNODE,
+-    RCSVERS,
+-    DIRS,
+-    UPDATE,
+-    LOCK,
+-    NDBMNODE,
+-    FILEATTR,
+-    VARIABLE,
+-    RCSFIELD,
+-    RCSCMPFLD,
+-    RCSSTRING,
+-}
+-
+-#[derive(Clone, Copy)]
+-#[repr(C)]
+-pub struct hashnode {
+-    pub type_ : ntype,
+-    pub next : *mut hashnode,
+-    pub prev : *mut hashnode,
+-    pub hashnext : *mut hashnode,
+-    pub hashprev : *mut hashnode,
+-    pub key : *mut u8,
+-    pub data : *mut ::std::os::raw::c_void,
+-    pub len : usize,
+-    pub delproc : unsafe extern fn(*mut hashnode),
+-}
+-
+-#[derive(Clone, Copy)]
+-#[repr(C)]
+-pub struct hashlist {
+-    pub list : *mut hashnode,
+-    pub hasharray : [*mut hashnode; 151],
+-    pub next : *mut hashlist,
+-}
+-
+ static mut attrlist : *mut hashlist = 0 as (*mut hashlist);
+ 
+ static mut fileattr_default_attrs : *mut u8 = 0 as (*mut u8);
