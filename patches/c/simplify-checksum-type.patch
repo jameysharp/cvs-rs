@@ -1,0 +1,21 @@
+There are no uses of the `int_checksum` field in the `checksum_t` union,
+so the only effect it could have would be to force `int`-sized
+alignment. But I don't see any sign that any uses rely on its alignment.
+So this patch deletes that field.
+
+With that done, there's only one field in that union, so this patch also
+turns the union into a struct.
+
+Index: b/src/cvs.h
+===================================================================
+--- a/src/cvs.h
++++ b/src/cvs.h
+@@ -538,7 +538,6 @@ extern const char *global_session_id;
+ /* From find_names.c.  */
+ List *find_files (const char *dir, const char *pat);
+ 
+-typedef union {
+-    uint32_t int_checksum[4];
++typedef struct {
+     unsigned char char_checksum[16];
+ } checksum_t;
