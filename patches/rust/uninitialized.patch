@@ -58,3 +58,45 @@ Index: b/src/vers_ts.rs
      let mut mtime : isize = 0isize;
      if lstat(file,&mut sb as (*mut stat)) == 0 {
          mtime = sb.st_mtim.tv_sec;
+Index: b/src/wrapper.rs
+===================================================================
+--- a/src/wrapper.rs
++++ b/src/wrapper.rs
+@@ -2,7 +2,7 @@ extern {
+     fn Xasprintf(format : *const u8, ...) -> *mut u8;
+     fn Xstrdup(str : *const u8) -> *mut u8;
+     fn __errno_location() -> *mut i32;
+-    fn abort();
++    fn abort() -> !;
+     static mut current_parsed_root : *mut cvsroot_s;
+     fn cvs_temp_name() -> *mut u8;
+     fn error(
+@@ -33,9 +33,6 @@ extern {
+     ) -> isize;
+     fn isfile(file : *const u8) -> bool;
+     fn isspace(arg1 : i32) -> i32;
+-    fn memset(
+-        __s : *mut ::std::os::raw::c_void, __c : i32, __n : usize
+-    ) -> *mut ::std::os::raw::c_void;
+     fn run_exec(
+         stin : *const u8, stout : *const u8, sterr : *const u8, flags : i32
+     ) -> i32;
+@@ -408,17 +405,12 @@ unsafe extern fn streq(
+ pub unsafe extern fn wrap_add(mut line : *mut u8, mut isTemp : i32) {
+     let mut temp : *mut u8;
+     let mut ctemp : u8;
+-    let mut e : Struct1;
++    let mut e : Struct1 = ::std::mem::zeroed();
+     let mut opt : u8;
+     if line.is_null() || *line.offset(
+                               0i32 as (isize)
+                           ) as (i32) == b'#' as (i32) {
+     } else {
+-        memset(
+-            &mut e as (*mut Struct1) as (*mut ::std::os::raw::c_void),
+-            0i32,
+-            ::std::mem::size_of::<Struct1>()
+-        );
+         'loop2: loop {
+             if *line != 0 && (isspace(*line as (i32)) != 0) {
+                 line = line.offset(1 as (isize));

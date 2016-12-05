@@ -7,3 +7,4 @@ pub mod rcscmds;
 pub mod scramble;
 pub mod stack;
 pub mod vers_ts;
+pub mod wrapper;

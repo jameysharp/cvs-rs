@@ -404,3 +404,66 @@ Index: b/src/fileattr.rs
  static mut attrlist : *mut hashlist = 0 as (*mut hashlist);
  
  static mut fileattr_default_attrs : *mut u8 = 0 as (*mut u8);
+Index: b/src/wrapper.rs
+===================================================================
+--- a/src/wrapper.rs
++++ b/src/wrapper.rs
+@@ -52,6 +52,8 @@ extern {
+     ) -> *mut ::std::os::raw::c_void;
+ }
+ 
++use hash::hashlist;
++
+ enum _IO_FILE {
+ }
+ 
+@@ -113,49 +115,6 @@ pub enum Enum4 {
+ }
+ 
+ #[derive(Clone, Copy)]
+-#[repr(i32)]
+-pub enum ntype {
+-    NT_UNKNOWN,
+-    HEADER,
+-    ENTRIES,
+-    FILES,
+-    LIST,
+-    RCSNODE,
+-    RCSVERS,
+-    DIRS,
+-    UPDATE,
+-    LOCK,
+-    NDBMNODE,
+-    FILEATTR,
+-    VARIABLE,
+-    RCSFIELD,
+-    RCSCMPFLD,
+-    RCSSTRING,
+-}
+-
+-#[derive(Clone, Copy)]
+-#[repr(C)]
+-pub struct hashnode {
+-    pub type_ : ntype,
+-    pub next : *mut hashnode,
+-    pub prev : *mut hashnode,
+-    pub hashnext : *mut hashnode,
+-    pub hashprev : *mut hashnode,
+-    pub key : *mut u8,
+-    pub data : *mut ::std::os::raw::c_void,
+-    pub len : usize,
+-    pub delproc : unsafe extern fn(*mut hashnode),
+-}
+-
+-#[derive(Clone, Copy)]
+-#[repr(C)]
+-pub struct hashlist {
+-    pub list : *mut hashnode,
+-    pub hasharray : [*mut hashnode; 151],
+-    pub next : *mut hashlist,
+-}
+-
+-#[derive(Clone, Copy)]
+ #[repr(i32)]
+ pub enum Enum5 {
+     VERIFY_DEFAULT = 0i32,
