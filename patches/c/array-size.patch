@@ -755,3 +755,16 @@ Index: b/src/update.h
  	       char *xdate, int xforce, int local, int xbuild,
  	       int xaflag, int xprune, int xpipeout, int which,
  	       char *xjoin_rev1, char *xjoin_date1,
+Index: b/src/client.c
+===================================================================
+--- a/src/client.c
++++ b/src/client.c
+@@ -3776,7 +3776,7 @@ handle_mt (char *args, size_t len)
+ #if defined(CLIENT_SUPPORT) || defined(SERVER_SUPPORT)
+ 
+ /* This table must be writeable if the server code is included.  */
+-struct response responses[] =
++struct response responses[46] =
+ {
+ #ifdef CLIENT_SUPPORT
+ #define RSP_LINE(n, f, t, s) {n, f, t, s}
