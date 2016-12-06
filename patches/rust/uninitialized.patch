@@ -100,3 +100,92 @@ Index: b/src/wrapper.rs
          'loop2: loop {
              if *line != 0 && (isspace(*line as (i32)) != 0) {
                  line = line.offset(1 as (isize));
+Index: b/src/log.rs
+===================================================================
+--- a/src/log.rs
++++ b/src/log.rs
+@@ -440,7 +440,7 @@ pub unsafe extern fn cvslog(
+     if (*current_parsed_root).isremote {
+         let mut p : *mut datelist;
+         let mut rp : *mut option_revlist;
+-        let mut datetmp : [u8; 50];
++        let mut datetmp = [0u8; 50];
+         start_server();
+         if is_rlog != 0 && !supported_request((*b"rlog\0").as_ptr()) {
+             error(1i32,0i32,(*b"server does not support rlog\0").as_ptr());
+@@ -824,8 +824,10 @@ unsafe extern fn rlog_proc(
+                     = where_ as (*mut ::std::os::raw::c_void);
+                 where_ = dir_append(where_ as (*const u8),d as (*const u8));
+                 free(tmp);
+-                myargv[0i32 as (usize)] = *argv.offset(0i32 as (isize));
+-                myargv[1i32 as (usize)] = last_component(mfile as (*const u8));
++                myargv = [
++                    *argv.offset(0i32 as (isize)),
++                    last_component(mfile as (*const u8)),
++                ];
+                 argc = 2i32;
+                 argv = myargv.as_mut_ptr();
+                 free(d as (*mut ::std::os::raw::c_void));
+@@ -1171,11 +1173,10 @@ unsafe extern fn log_fileproc(
+     let mut baserev : *mut u8;
+     let mut selrev : i32 = -1i32;
+     let mut rcsfile : *mut rcsnode;
+-    let mut buf : [u8; 50];
++    let mut buf = [0u8; 50];
+     let mut revlist
+         : *mut revlist
+         = 0i32 as (*mut ::std::os::raw::c_void) as (*mut revlist);
+-    let mut log_data_and_rcs : log_data_and_rcs;
+     rcsfile = (*finfo).rcs;
+     p = findnode((*finfo).entries,(*finfo).file);
+     if p != 0i32 as (*mut ::std::os::raw::c_void) as (*mut hashnode) {
+@@ -1224,9 +1225,11 @@ unsafe extern fn log_fileproc(
+                           (*log_data).default_branch
+                       );
+             if (*log_data).sup_header != 0 || (*log_data).header == 0 && ((*log_data).long_header == 0) {
+-                log_data_and_rcs.log_data = log_data;
+-                log_data_and_rcs.revlist = revlist;
+-                log_data_and_rcs.rcs = rcsfile;
++                let mut log_data_and_rcs = log_data_and_rcs {
++                    log_data: log_data,
++                    revlist: revlist,
++                    rcs: rcsfile,
++                };
+                 if (*log_data).singledatelist != 0i32 as (*mut ::std::os::raw::c_void) as (*mut datelist) {
+                     walklist(
+                         (*rcsfile).versions,
+@@ -2109,13 +2112,13 @@ unsafe extern fn log_version(
+     mut trunk : i32
+ ) {
+     let mut p : *mut hashnode;
+-    let mut year : i32;
+-    let mut mon : i32;
+-    let mut mday : i32;
+-    let mut hour : i32;
+-    let mut min : i32;
+-    let mut sec : i32;
+-    let mut buf : [u8; 100];
++    let mut year : i32 = 0;
++    let mut mon : i32 = 0;
++    let mut mday : i32 = 0;
++    let mut hour : i32 = 0;
++    let mut min : i32 = 0;
++    let mut sec : i32 = 0;
++    let mut buf = [0u8; 100];
+     let mut padd : *mut hashnode;
+     let mut pdel : *mut hashnode;
+     if log_version_requested(log_data,revlist,rcs,ver) == 0 {
+@@ -2253,10 +2256,10 @@ unsafe extern fn log_version(
+                 (*b"openpgp-signatures\0").as_ptr()
+             );
+         if !p.is_null() {
+-            let mut rawsig : *mut u8;
+-            let mut rawsiglen : usize;
++            let mut rawsig : *mut u8 = 0 as (*mut u8);
++            let mut rawsiglen : usize = 0;
+             let mut membuf : *mut buffer;
+-            let mut sig : openpgp_signature;
++            let mut sig : openpgp_signature = ::std::mem::zeroed();
+             let mut rc : i32;
+             if !base64_decode_alloc_ctx(
+                     0i32 as (*mut ::std::os::raw::c_void) as (*mut base64_decode_context),

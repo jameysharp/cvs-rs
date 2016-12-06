@@ -1,0 +1,19 @@
+When Corrode generates an unconstructable type, it currently makes it
+non-public. This may be a bug in Corrode (I haven't decided) but the
+immediate problem is that this means these types are not allowed to
+appear in public declarations. So this patch manually marks
+unconstructable types as public if they're used in public symbols.
+
+Index: b/src/log.rs
+===================================================================
+--- a/src/log.rs
++++ b/src/log.rs
+@@ -144,7 +144,7 @@ extern {
+ 
+ use hash::{hashnode, hashlist, addnode, dellist, findnode, freenode, getlist, getnode, walklist};
+ 
+-enum buffer_data {
++pub enum buffer_data {
+ }
+ 
+ #[derive(Clone, Copy)]

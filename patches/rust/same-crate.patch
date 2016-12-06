@@ -467,3 +467,110 @@ Index: b/src/wrapper.rs
  #[repr(i32)]
  pub enum Enum5 {
      VERIFY_DEFAULT = 0i32,
+Index: b/src/log.rs
+===================================================================
+--- a/src/log.rs
++++ b/src/log.rs
+@@ -25,7 +25,6 @@ extern {
+         __function : *const u8
+     );
+     fn __errno_location() -> *mut i32;
+-    fn addnode(list : *mut hashlist, p : *mut hashnode) -> i32;
+     fn base64_decode_alloc_ctx(
+         ctx : *mut base64_decode_context,
+         in_ : *const u8,
+@@ -45,7 +44,6 @@ extern {
+     fn cvs_output(arg1 : *const u8, arg2 : usize);
+     fn cvs_output_tagged(arg1 : *const u8, arg2 : *const u8);
+     fn date_to_internet(arg1 : *mut u8, arg2 : *const u8);
+-    fn dellist(listp : *mut *mut hashlist);
+     fn dir_append(dir : *const u8, append : *const u8) -> *mut u8;
+     fn dir_name(file : *const u8) -> *mut u8;
+     fn do_module(
+@@ -66,15 +64,9 @@ extern {
+     fn error(
+         __status : i32, __errnum : i32, __format : *const u8, ...
+     );
+-    fn findnode(
+-        list : *mut hashlist, key : *const u8
+-    ) -> *mut hashnode;
+     fn free(__ptr : *mut ::std::os::raw::c_void);
+-    fn freenode(p : *mut hashnode);
+     fn get_responses_and_close() -> i32;
+     fn getcaller() -> *mut u8;
+-    fn getlist() -> *mut hashlist;
+-    fn getnode() -> *mut hashnode;
+     fn getopt(
+         ___argc : i32, ___argv : *const *mut u8, __shortopts : *const u8
+     ) -> i32;
+@@ -145,18 +137,13 @@ extern {
+     fn strrchr(__s : *const u8, __c : i32) -> *mut u8;
+     fn supported_request(arg1 : *const u8) -> bool;
+     fn usage(cpp : *const *const u8);
+-    fn walklist(
+-        list : *mut hashlist,
+-        arg2
+-        :
+-        unsafe extern fn(*mut hashnode, *mut ::std::os::raw::c_void) -> i32,
+-        closure : *mut ::std::os::raw::c_void
+-    ) -> i32;
+     fn wrap_setup();
+     fn xalloc_die();
+     fn xmalloc(s : usize) -> *mut ::std::os::raw::c_void;
+ }
+ 
++use hash::{hashnode, hashlist, addnode, dellist, findnode, freenode, getlist, getnode, walklist};
++
+ enum buffer_data {
+ }
+ 
+@@ -180,49 +167,6 @@ pub struct datelist {
+ }
+ 
+ #[derive(Clone, Copy)]
+-#[repr(i32)]
+-pub enum ntype {
+-    NT_UNKNOWN,
+-    HEADER,
+-    ENTRIES,
+-    FILES,
+-    LIST,
+-    RCSNODE,
+-    RCSVERS,
+-    DIRS,
+-    UPDATE,
+-    LOCK,
+-    NDBMNODE,
+-    FILEATTR,
+-    VARIABLE,
+-    RCSFIELD,
+-    RCSCMPFLD,
+-    RCSSTRING,
+-}
+-
+-#[derive(Clone, Copy)]
+-#[repr(C)]
+-pub struct hashnode {
+-    pub type_ : ntype,
+-    pub next : *mut hashnode,
+-    pub prev : *mut hashnode,
+-    pub hashnext : *mut hashnode,
+-    pub hashprev : *mut hashnode,
+-    pub key : *mut u8,
+-    pub data : *mut ::std::os::raw::c_void,
+-    pub len : usize,
+-    pub delproc : unsafe extern fn(*mut hashnode),
+-}
+-
+-#[derive(Clone, Copy)]
+-#[repr(C)]
+-pub struct hashlist {
+-    pub list : *mut hashnode,
+-    pub hasharray : [*mut hashnode; 151],
+-    pub next : *mut hashlist,
+-}
+-
+-#[derive(Clone, Copy)]
+ #[repr(C)]
+ pub struct log_data {
+     pub nameonly : i32,

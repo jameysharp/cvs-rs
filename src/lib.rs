@@ -3,6 +3,7 @@ pub mod exithandle;
 pub mod fileattr;
 pub mod hardlink;
 pub mod hash;
+pub mod log;
 pub mod rcscmds;
 pub mod scramble;
 pub mod stack;

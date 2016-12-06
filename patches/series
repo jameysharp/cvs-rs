@@ -9,3 +9,5 @@ rust/fix-loops.patch
 rust/nullable-functions.patch
 rust/non-copyable.patch
 rust/uninitialized.patch
+rust/public.patch
+rust/static-strings.patch

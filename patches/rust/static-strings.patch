@@ -1,0 +1,107 @@
+In Rust, initializers for static items are limited to a small selection
+of compile-time-evaluatable constant expressions, and many things that C
+would allow are not allowed when we translate them naively to Rust.
+
+Notably, this idiom which Corrode generates for string literals used as
+pointers:
+
+    (*b"...").as_ptr()
+
+is not allowed because the `as_ptr` call is not a constant expression.
+
+Fortunately, a string literal is typed as a borrow of a static array,
+which we're allowed to cast to a raw pointer to the array's element
+type. So that's what this patch does.
+
+I could probably make Corrode always generate casts rather than calls to
+`as_ptr` or `as_mut_ptr`, but that would make the generated code even
+less readable than it already is. For now I think manual fix-ups are
+easier in the few cases of static items than in the many cases
+elsewhere.
+
+Index: b/src/log.rs
+===================================================================
+--- a/src/log.rs
++++ b/src/log.rs
+@@ -186,51 +186,36 @@ static mut global_log_data : *mut log_da
+ 
+ static mut is_rlog : i32 = 0i32;
+ 
+-static mut log_usage
+-    : [*const u8; 28]
+-    = [   (*b"Usage: %s %s [-lRhtNb] [-r[revisions]] [-d dates] [-s states]\n\0").as_ptr(
+-          ),
+-          (*b"    [-w[logins]] [files...]\n\0").as_ptr(),
+-          (*b"\t-l\tLocal directory only, no recursion.\n\0").as_ptr(),
+-          (*b"\t-b\tList revisions on the default branch.\n\0").as_ptr(),
+-          (*b"\t-h\tOnly print header.\n\0").as_ptr(),
+-          (*b"\t-R\tOnly print name of RCS file.\n\0").as_ptr(),
+-          (*b"\t-t\tOnly print header and descriptive text.\n\0").as_ptr(),
+-          (*b"\t-N\tDo not list tags.\n\0").as_ptr(),
+-          (*b"\t-n\tList tags (default).\n\0").as_ptr(),
+-          (*b"\t-S\tDo not print name/header if no revisions selected.  -d, -r,\n\0").as_ptr(
+-          ),
+-          (*b"\t\t-s, & -w have little effect in conjunction with -b, -h, -R, and\n\0").as_ptr(
+-          ),
+-          (*b"\t\t-t without this option.\n\0").as_ptr(),
+-          (*b"\t-r[revisions]\tA comma-separated list of revisions to print:\n\0").as_ptr(
+-          ),
+-          (*b"\t   rev1:rev2   Between rev1 and rev2, including rev1 and rev2.\n\0").as_ptr(
+-          ),
+-          (*b"\t   rev1::rev2  Between rev1 and rev2, excluding rev1.\n\0").as_ptr(
+-          ),
+-          (*b"\t   rev:        rev and following revisions on the same branch.\n\0").as_ptr(
+-          ),
+-          (*b"\t   rev::       After rev on the same branch.\n\0").as_ptr(),
+-          (*b"\t   :rev        rev and previous revisions on the same branch.\n\0").as_ptr(
+-          ),
+-          (*b"\t   ::rev       rev and previous revisions on the same branch.\n\0").as_ptr(
+-          ),
+-          (*b"\t   rev         Just rev.\n\0").as_ptr(),
+-          (*b"\t   branch      All revisions on the branch.\n\0").as_ptr(),
+-          (*b"\t   branch.     The last revision on the branch.\n\0").as_ptr(
+-          ),
+-          (*b"\t-d dates\tA semicolon-separated list of dates\n\0").as_ptr(),
+-          (*b"\t        \t(D1<D2 for range, D for latest before).\n\0").as_ptr(
+-          ),
+-          (*b"\t-s states\tOnly list revisions with specified states.\n\0").as_ptr(
+-          ),
+-          (*b"\t-w[logins]\tOnly list revisions checked in by specified logins.\n\0").as_ptr(
+-          ),
+-          (*b"(Specify the --help global option for a list of other help options)\n\0").as_ptr(
+-          ),
+-          0i32 as (*mut ::std::os::raw::c_void) as (*const u8)
+-      ];
++static mut log_usage : [*const u8; 28] = [
++    b"Usage: %s %s [-lRhtNb] [-r[revisions]] [-d dates] [-s states]\n\0" as (*const u8),
++    b"    [-w[logins]] [files...]\n\0" as (*const u8),
++    b"\t-l\tLocal directory only, no recursion.\n\0" as (*const u8),
++    b"\t-b\tList revisions on the default branch.\n\0" as (*const u8),
++    b"\t-h\tOnly print header.\n\0" as (*const u8),
++    b"\t-R\tOnly print name of RCS file.\n\0" as (*const u8),
++    b"\t-t\tOnly print header and descriptive text.\n\0" as (*const u8),
++    b"\t-N\tDo not list tags.\n\0" as (*const u8),
++    b"\t-n\tList tags (default).\n\0" as (*const u8),
++    b"\t-S\tDo not print name/header if no revisions selected.  -d, -r,\n\0" as (*const u8),
++    b"\t\t-s, & -w have little effect in conjunction with -b, -h, -R, and\n\0" as (*const u8),
++    b"\t\t-t without this option.\n\0" as (*const u8),
++    b"\t-r[revisions]\tA comma-separated list of revisions to print:\n\0" as (*const u8),
++    b"\t   rev1:rev2   Between rev1 and rev2, including rev1 and rev2.\n\0" as (*const u8),
++    b"\t   rev1::rev2  Between rev1 and rev2, excluding rev1.\n\0" as (*const u8),
++    b"\t   rev:        rev and following revisions on the same branch.\n\0" as (*const u8),
++    b"\t   rev::       After rev on the same branch.\n\0" as (*const u8),
++    b"\t   :rev        rev and previous revisions on the same branch.\n\0" as (*const u8),
++    b"\t   ::rev       rev and previous revisions on the same branch.\n\0" as (*const u8),
++    b"\t   rev         Just rev.\n\0" as (*const u8),
++    b"\t   branch      All revisions on the branch.\n\0" as (*const u8),
++    b"\t   branch.     The last revision on the branch.\n\0" as (*const u8),
++    b"\t-d dates\tA semicolon-separated list of dates\n\0" as (*const u8),
++    b"\t        \t(D1<D2 for range, D for latest before).\n\0" as (*const u8),
++    b"\t-s states\tOnly list revisions with specified states.\n\0" as (*const u8),
++    b"\t-w[logins]\tOnly list revisions checked in by specified logins.\n\0" as (*const u8),
++    b"(Specify the --help global option for a list of other help options)\n\0" as (*const u8),
++    0i32 as (*mut ::std::os::raw::c_void) as (*const u8)
++];
+ 
+ unsafe extern fn streq(
+     mut a : *const u8, mut b : *const u8

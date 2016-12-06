@@ -113,3 +113,63 @@ Index: b/src/fileattr.rs
          (*node).key = Xstrdup(filename);
          (*node).data = Xstrdup(
                             fileattr_default_attrs as (*const u8)
+Index: b/src/log.rs
+===================================================================
+--- a/src/log.rs
++++ b/src/log.rs
+@@ -34,7 +34,7 @@ extern {
+     ) -> bool;
+     fn buf_free(arg1 : *mut buffer);
+     fn buf_nonio_initialize(
+-        arg1 : unsafe extern fn(*mut buffer)
++        arg1 : Option<unsafe extern fn(*mut buffer)>
+     ) -> *mut buffer;
+     fn buf_output(arg1 : *mut buffer, arg2 : *const u8, arg3 : usize);
+     fn chdir(__path : *const u8) -> i32;
+@@ -105,16 +105,16 @@ extern {
+     fn start_recursion(
+         fileproc
+         :
+-        unsafe extern fn(*mut ::std::os::raw::c_void, *mut file_info) -> i32,
++        Option<unsafe extern fn(*mut ::std::os::raw::c_void, *mut file_info) -> i32>,
+         filesdoneproc
+         :
+-        unsafe extern fn(*mut ::std::os::raw::c_void, i32, *const u8, *const u8, *mut hashlist) -> i32,
++        Option<unsafe extern fn(*mut ::std::os::raw::c_void, i32, *const u8, *const u8, *mut hashlist) -> i32>,
+         direntproc
+         :
+-        unsafe extern fn(*mut ::std::os::raw::c_void, *const u8, *const u8, *const u8, *mut hashlist) -> direnter_type,
++        Option<unsafe extern fn(*mut ::std::os::raw::c_void, *const u8, *const u8, *const u8, *mut hashlist) -> direnter_type>,
+         dirleaveproc
+         :
+-        unsafe extern fn(*mut ::std::os::raw::c_void, *const u8, i32, *const u8, *mut hashlist) -> i32,
++        Option<unsafe extern fn(*mut ::std::os::raw::c_void, *const u8, i32, *const u8, *mut hashlist) -> i32>,
+         callerdat : *mut ::std::os::raw::c_void,
+         argc : i32,
+         argv : *mut *mut u8,
+@@ -851,10 +851,10 @@ unsafe extern fn rlog_proc(
+         which = 1i32 << 0i32 | 1i32 << 1i32 | 1i32 << 2i32;
+     }
+     err = start_recursion(
+-              log_fileproc,
+-              0i32 as (*mut ::std::os::raw::c_void) as (unsafe extern fn(*mut ::std::os::raw::c_void, i32, *const u8, *const u8, *mut hashlist) -> i32),
+-              log_dirproc,
+-              0i32 as (*mut ::std::os::raw::c_void) as (unsafe extern fn(*mut ::std::os::raw::c_void, *const u8, i32, *const u8, *mut hashlist) -> i32),
++              Some(log_fileproc),
++              None,
++              Some(log_dirproc),
++              None,
+               global_log_data as (*mut ::std::os::raw::c_void),
+               argc - 1i32,
+               argv.offset(1i32 as (isize)),
+@@ -2274,9 +2274,7 @@ unsafe extern fn log_version(
+             if rawsig.is_null() {
+                 xalloc_die();
+             }
+-            membuf = buf_nonio_initialize(
+-                         0i32 as (*mut ::std::os::raw::c_void) as (unsafe extern fn(*mut buffer))
+-                     );
++            membuf = buf_nonio_initialize(None);
+             buf_output(membuf,rawsig as (*const u8),rawsiglen);
+             'loop24: loop {
+                 if {
