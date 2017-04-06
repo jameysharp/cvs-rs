@@ -1,0 +1,23 @@
+Corrode is not yet careful about placing variables in the right scope
+after structuring the control-flow graph, so sometimes variable
+declarations need to be moved earlier in order to be visible everywhere
+that they're used.
+
+Index: b/src/log.rs
+===================================================================
+--- a/src/log.rs
++++ b/src/log.rs
+@@ -2278,10 +2278,10 @@ unsafe extern fn version_compare(
+     mut v1 : *const u8, mut v2 : *const u8, mut len : i32
+ ) -> i32 {
+     let mut _currentBlock;
++    let mut d1 : i32 = 0;
++    let mut d2 : i32 = 0;
++    let mut r : i32 = 0;
+     'loop0: loop {
+-        let mut d1 : i32;
+-        let mut d2 : i32;
+-        let mut r : i32;
+         if *v1 as (i32) == b'\0' as (i32) {
+             _currentBlock = 23;
+             break;

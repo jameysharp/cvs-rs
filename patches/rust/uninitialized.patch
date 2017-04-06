@@ -81,7 +81,7 @@ Index: b/src/wrapper.rs
      fn run_exec(
          stin : *const u8, stout : *const u8, sterr : *const u8, flags : i32
      ) -> i32;
-@@ -408,17 +405,12 @@ unsafe extern fn streq(
+@@ -397,17 +394,12 @@ unsafe extern fn streq(
  pub unsafe extern fn wrap_add(mut line : *mut u8, mut isTemp : i32) {
      let mut temp : *mut u8;
      let mut ctemp : u8;
@@ -89,7 +89,7 @@ Index: b/src/wrapper.rs
 +    let mut e : Struct1 = ::std::mem::zeroed();
      let mut opt : u8;
      if line.is_null() || *line.offset(
-                               0i32 as (isize)
+                               0isize
                            ) as (i32) == b'#' as (i32) {
      } else {
 -        memset(
@@ -98,13 +98,13 @@ Index: b/src/wrapper.rs
 -            ::std::mem::size_of::<Struct1>()
 -        );
          'loop2: loop {
-             if *line != 0 && (isspace(*line as (i32)) != 0) {
-                 line = line.offset(1 as (isize));
+             if !(*line != 0 && (isspace(*line as (i32)) != 0)) {
+                 break;
 Index: b/src/log.rs
 ===================================================================
 --- a/src/log.rs
 +++ b/src/log.rs
-@@ -440,7 +440,7 @@ pub unsafe extern fn cvslog(
+@@ -425,7 +425,7 @@ pub unsafe extern fn cvslog(
      if (*current_parsed_root).isremote {
          let mut p : *mut datelist;
          let mut rp : *mut option_revlist;
@@ -113,20 +113,20 @@ Index: b/src/log.rs
          start_server();
          if is_rlog != 0 && !supported_request((*b"rlog\0").as_ptr()) {
              error(1i32,0i32,(*b"server does not support rlog\0").as_ptr());
-@@ -824,8 +824,10 @@ unsafe extern fn rlog_proc(
+@@ -784,8 +784,10 @@ unsafe extern fn rlog_proc(
                      = where_ as (*mut ::std::os::raw::c_void);
                  where_ = dir_append(where_ as (*const u8),d as (*const u8));
                  free(tmp);
--                myargv[0i32 as (usize)] = *argv.offset(0i32 as (isize));
--                myargv[1i32 as (usize)] = last_component(mfile as (*const u8));
+-                myargv[0usize] = *argv.offset(0isize);
+-                myargv[1usize] = last_component(mfile as (*const u8));
 +                myargv = [
-+                    *argv.offset(0i32 as (isize)),
++                    *argv.offset(0isize),
 +                    last_component(mfile as (*const u8)),
 +                ];
                  argc = 2i32;
                  argv = myargv.as_mut_ptr();
                  free(d as (*mut ::std::os::raw::c_void));
-@@ -1171,11 +1173,10 @@ unsafe extern fn log_fileproc(
+@@ -1119,11 +1121,10 @@ unsafe extern fn log_fileproc(
      let mut baserev : *mut u8;
      let mut selrev : i32 = -1i32;
      let mut rcsfile : *mut rcsnode;
@@ -139,7 +139,7 @@ Index: b/src/log.rs
      rcsfile = (*finfo).rcs;
      p = findnode((*finfo).entries,(*finfo).file);
      if p != 0i32 as (*mut ::std::os::raw::c_void) as (*mut hashnode) {
-@@ -1224,9 +1225,11 @@ unsafe extern fn log_fileproc(
+@@ -1172,9 +1173,11 @@ unsafe extern fn log_fileproc(
                            (*log_data).default_branch
                        );
              if (*log_data).sup_header != 0 || (*log_data).header == 0 && ((*log_data).long_header == 0) {
@@ -154,7 +154,7 @@ Index: b/src/log.rs
                  if (*log_data).singledatelist != 0i32 as (*mut ::std::os::raw::c_void) as (*mut datelist) {
                      walklist(
                          (*rcsfile).versions,
-@@ -2109,13 +2112,13 @@ unsafe extern fn log_version(
+@@ -2025,13 +2028,13 @@ unsafe extern fn log_version(
      mut trunk : i32
  ) {
      let mut p : *mut hashnode;
@@ -175,7 +175,7 @@ Index: b/src/log.rs
      let mut padd : *mut hashnode;
      let mut pdel : *mut hashnode;
      if log_version_requested(log_data,revlist,rcs,ver) == 0 {
-@@ -2253,10 +2256,10 @@ unsafe extern fn log_version(
+@@ -2169,10 +2172,10 @@ unsafe extern fn log_version(
                  (*b"openpgp-signatures\0").as_ptr()
              );
          if !p.is_null() {
