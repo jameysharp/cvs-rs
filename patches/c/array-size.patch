@@ -264,7 +264,7 @@ Index: b/src/main.c
      int (*func) (int, char **);	/* Function takes (argc, argv) arguments. */
      unsigned long attr;		/* Attributes. */
 -} cmds[] =
-+} cmds[36] =
++} cmds[35] =
  
  {
      { "add",      "ad",       "new",       add,       CVS_CMD_MODIFIES_REPOSITORY | CVS_CMD_USES_WORK_DIR },
@@ -403,7 +403,7 @@ Index: b/src/mkmodules.c
  };
  
 -static const char *const config_contents[] = {
-+static const char *const config_contents[109] = {
++static const char *const config_contents[104] = {
      "# Set `SystemAuth' to `no' if pserver shouldn't check system users/passwords.\n",
      "#SystemAuth=yes\n",
      "\n",
