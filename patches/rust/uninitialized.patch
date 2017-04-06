@@ -154,7 +154,7 @@ Index: b/src/log.rs
                  if (*log_data).singledatelist != 0i32 as (*mut ::std::os::raw::c_void) as (*mut datelist) {
                      walklist(
                          (*rcsfile).versions,
-@@ -2025,13 +2028,13 @@ unsafe extern fn log_version(
+@@ -2021,13 +2024,13 @@ unsafe extern fn log_version(
      mut trunk : i32
  ) {
      let mut p : *mut hashnode;
@@ -175,7 +175,7 @@ Index: b/src/log.rs
      let mut padd : *mut hashnode;
      let mut pdel : *mut hashnode;
      if log_version_requested(log_data,revlist,rcs,ver) == 0 {
-@@ -2169,10 +2172,10 @@ unsafe extern fn log_version(
+@@ -2165,10 +2168,10 @@ unsafe extern fn log_version(
                  (*b"openpgp-signatures\0").as_ptr()
              );
          if !p.is_null() {
@@ -189,3 +189,60 @@ Index: b/src/log.rs
              let mut rc : i32;
              if !base64_decode_alloc_ctx(
                      0i32 as (*mut ::std::os::raw::c_void) as (*mut base64_decode_context),
+Index: b/src/entries.rs
+===================================================================
+--- a/src/entries.rs
++++ b/src/entries.rs
+@@ -581,14 +581,14 @@ unsafe extern fn fgetentent(
+     let mut ent : *mut entnode;
+     let mut line : *mut u8;
+     let mut line_chars_allocated : usize;
+-    let mut cp : *mut u8;
+-    let mut type_ : ent_type;
++    let mut cp : *mut u8 = ::std::ptr::null_mut();
++    let mut type_ : ent_type = ent_type::ENT_FILE;
+     let mut l : *mut u8;
+-    let mut user : *mut u8;
+-    let mut vn : *mut u8;
+-    let mut ts : *mut u8;
+-    let mut options : *mut u8;
+-    let mut tag_or_date : *mut u8;
++    let mut user : *mut u8 = ::std::ptr::null_mut();
++    let mut vn : *mut u8 = ::std::ptr::null_mut();
++    let mut ts : *mut u8 = ::std::ptr::null_mut();
++    let mut options : *mut u8 = ::std::ptr::null_mut();
++    let mut tag_or_date : *mut u8 = ::std::ptr::null_mut();
+     let mut tag : *mut u8;
+     let mut date : *mut u8;
+     let mut ts_conflict : *mut u8;
+@@ -703,7 +703,7 @@ unsafe extern fn fgetentent(
+                  _old
+              } = b'\0';
+         }
+-        let mut sb : stat;
++        let mut sb : stat = ::std::mem::zeroed();
+         if strlen(ts as (*const u8)) > 30usize && (stat(
+                                                        user as (*const u8),
+                                                        &mut sb as (*mut stat)
+@@ -857,9 +857,9 @@ pub unsafe extern fn Entries_Open_Dir(
+         : *mut stickydirtag
+         = 0i32 as (*mut ::std::os::raw::c_void) as (*mut stickydirtag);
+     let mut ent : *mut entnode;
+-    let mut dirtag : *mut u8;
+-    let mut dirdate : *mut u8;
+-    let mut dirnonbranch : i32;
++    let mut dirtag : *mut u8 = ::std::ptr::null_mut();
++    let mut dirdate : *mut u8 = ::std::ptr::null_mut();
++    let mut dirnonbranch : i32 = 0;
+     let mut do_rewrite : i32 = 0i32;
+     let mut fpin : *mut _IO_FILE;
+     let mut sawdir : i32;
+@@ -954,7 +954,7 @@ pub unsafe extern fn Entries_Open_Dir(
+     filename = dir_append(dir,(*b"CVS/Entries.Log\0").as_ptr());
+     fpin = fopen(filename as (*const u8),(*b"r\0").as_ptr());
+     if !fpin.is_null() {
+-        let mut cmd : u8;
++        let mut cmd : u8 = 0;
+         let mut node : *mut hashnode;
+         'loop9: loop {
+             if !({

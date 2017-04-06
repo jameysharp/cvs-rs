@@ -86,7 +86,7 @@ Index: b/src/fileattr.rs
                      (*newnode).key = Xstrdup(line.offset(1isize) as (*const u8));
                      (*newnode).data = Xstrdup(
                                            p as (*const u8)
-@@ -568,7 +568,7 @@ pub unsafe extern fn fileattr_set(
+@@ -566,7 +566,7 @@ pub unsafe extern fn fileattr_set(
              } else {
                  node = getnode();
                  (*node).type_ = ntype::FILEATTR;
@@ -95,7 +95,7 @@ Index: b/src/fileattr.rs
                  (*node).key = Xstrdup(filename);
                  (*node).data = Xasprintf(
                                     (*b"%s=%s\0").as_ptr(),
-@@ -644,7 +644,7 @@ pub unsafe extern fn fileattr_setall(
+@@ -642,7 +642,7 @@ pub unsafe extern fn fileattr_setall(
              if attrs != 0i32 as (*mut ::std::os::raw::c_void) as (*const u8) {
                  node = getnode();
                  (*node).type_ = ntype::FILEATTR;
@@ -104,7 +104,7 @@ Index: b/src/fileattr.rs
                  (*node).key = Xstrdup(filename);
                  (*node).data = Xstrdup(attrs) as (*mut ::std::os::raw::c_void);
                  addnode(attrlist,node);
-@@ -672,7 +672,7 @@ pub unsafe extern fn fileattr_newfile(mu
+@@ -670,7 +670,7 @@ pub unsafe extern fn fileattr_newfile(mu
          }
          node = getnode();
          (*node).type_ = ntype::FILEATTR;
@@ -162,7 +162,7 @@ Index: b/src/log.rs
                global_log_data as (*mut ::std::os::raw::c_void),
                argc - 1i32,
                argv.offset(1isize),
-@@ -2190,9 +2190,7 @@ unsafe extern fn log_version(
+@@ -2186,9 +2186,7 @@ unsafe extern fn log_version(
              if rawsig.is_null() {
                  xalloc_die();
              }
@@ -173,3 +173,34 @@ Index: b/src/log.rs
              buf_output(membuf,rawsig as (*const u8),rawsiglen);
              'loop24: loop {
                  if !({
+Index: b/src/entries.rs
+===================================================================
+--- a/src/entries.rs
++++ b/src/entries.rs
+@@ -260,7 +260,7 @@ unsafe extern fn AddEntryNode(
+     }
+     p = getnode();
+     (*p).type_ = ntype::ENTRIES;
+-    (*p).delproc = Entries_delproc as (unsafe extern fn(*mut hashnode));
++    (*p).delproc = Some(Entries_delproc);
+     (*p).key = Xstrdup((*entdata).user as (*const u8));
+     (*p).data = entdata as (*mut ::std::os::raw::c_void);
+     addnode(list,p);
+@@ -900,7 +900,7 @@ pub unsafe extern fn Entries_Open_Dir(
+         (*sdtp).date = Xstrdup(dirdate as (*const u8));
+         (*sdtp).nonbranch = dirnonbranch;
+         (*(*entries).list).data = sdtp as (*mut ::std::os::raw::c_void);
+-        (*(*entries).list).delproc = freesdt as (unsafe extern fn(*mut hashnode));
++        (*(*entries).list).delproc = Some(freesdt);
+     }
+     sawdir = 0i32;
+     update_dir = dir_append(update_dir_i,dir);
+@@ -1005,7 +1005,7 @@ pub unsafe extern fn Entries_Open_Dir(
+                ) as (*mut stickydirtag);
+         (*sdtp).subdirs = 0i32;
+         (*(*entries).list).data = sdtp as (*mut ::std::os::raw::c_void);
+-        (*(*entries).list).delproc = freesdt as (unsafe extern fn(*mut hashnode));
++        (*(*entries).list).delproc = Some(freesdt);
+     }
+     if do_rewrite != 0 && (noexec == 0) {
+         write_entries(entries,update_dir_i,dir);

@@ -20,9 +20,12 @@ Index: b/src/Makefile.am
  	checkout.c \
  	classify.c classify.h \
  	client.c \
-@@ -44,19 +43,14 @@ cvs_SOURCES = \
+@@ -42,21 +41,16 @@ cvs_SOURCES = \
+ 	diff.c diff.h \
+ 	difflib.c difflib.h \
  	edit.c \
- 	entries.c entries.h \
+-	entries.c entries.h \
++	entries.h \
  	error.c \
 -	exithandle.c \
  	expand_path.c \
@@ -71,12 +74,13 @@ Index: b/src/Makefile.am
  	zlib.c \
  	buffer.h \
  	client.h \
-@@ -107,15 +99,40 @@ cvs_SOURCES = \
+@@ -107,15 +99,41 @@ cvs_SOURCES = \
  	update.h \
  	watch.h
  
 +RUST_SOURCES = \
 +	checkin.rs \
++	entries.rs \
 +	exithandle.rs \
 +	fileattr.rs \
 +	hardlink.rs \

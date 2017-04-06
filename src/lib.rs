@@ -1,4 +1,5 @@
 pub mod checkin;
+pub mod entries;
 pub mod exithandle;
 pub mod fileattr;
 pub mod hardlink;

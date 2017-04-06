@@ -71,10 +71,19 @@ Index: b/src/checkin.rs
 ===================================================================
 --- a/src/checkin.rs
 +++ b/src/checkin.rs
-@@ -32,14 +32,6 @@ extern {
-         date : *const u8,
-         ts_conflict : *const u8
-     );
+@@ -23,23 +23,6 @@ extern {
+     fn RCS_unlock(
+         arg1 : *mut rcsnode, arg2 : *mut u8, arg3 : i32
+     ) -> i32;
+-    fn Register(
+-        finfo : *const file_info,
+-        vn : *const u8,
+-        ts : *const u8,
+-        options : *const u8,
+-        tag : *const u8,
+-        date : *const u8,
+-        ts_conflict : *const u8
+-    );
 -    fn Version_TS(
 -        finfo : *mut file_info,
 -        options : *const u8,
@@ -86,7 +95,7 @@ Index: b/src/checkin.rs
      fn __assert_fail(
          __assertion : *const u8,
          __file : *const u8,
-@@ -73,7 +65,6 @@ extern {
+@@ -73,7 +56,6 @@ extern {
          filename : *const u8, attrname : *const u8
      ) -> *mut u8;
      fn free(__ptr : *mut ::std::os::raw::c_void);
@@ -94,13 +103,16 @@ Index: b/src/checkin.rs
      fn history_write(
          type_ : i32,
          update_dir : *const u8,
-@@ -107,121 +98,10 @@ extern {
+@@ -107,121 +89,11 @@ extern {
      fn xchmod(fname : *const u8, writable : bool);
  }
  
 -enum buffer {
 -}
--
++use entries::Register;
++use hash::hashlist;
++use vers_ts::{file_info, rcsnode, vers_ts, Version_TS, freevers_ts};
+ 
 -#[derive(Clone, Copy)]
 -#[repr(i32)]
 -pub enum ntype {
@@ -177,9 +189,7 @@ Index: b/src/checkin.rs
 -    pub entries : *mut hashlist,
 -    pub rcs : *mut rcsnode,
 -}
-+use hash::hashlist;
-+use vers_ts::{file_info, rcsnode, vers_ts, Version_TS, freevers_ts};
- 
+-
 -#[derive(Clone, Copy)]
 -#[repr(i32)]
 -pub enum ent_type {
@@ -574,3 +584,151 @@ Index: b/src/log.rs
  #[repr(C)]
  pub struct log_data {
      pub nameonly : i32,
+Index: b/src/entries.rs
+===================================================================
+--- a/src/entries.rs
++++ b/src/entries.rs
+@@ -8,11 +8,8 @@ extern {
+         __function : *const u8
+     );
+     fn __errno_location() -> *mut i32;
+-    fn addnode(list : *mut hashlist, p : *mut hashnode) -> i32;
+     fn base_remove(file : *const u8, rev : *const u8);
+     fn ctime(__timer : *const isize) -> *mut u8;
+-    fn dellist(listp : *mut *mut hashlist);
+-    fn delnode(p : *mut hashnode);
+     fn dir_append(dir : *const u8, append : *const u8) -> *mut u8;
+     fn dir_append_dirs(dir : *const u8, ...) -> *mut u8;
+     fn error(
+@@ -20,9 +17,6 @@ extern {
+     );
+     fn fclose(__stream : *mut _IO_FILE) -> i32;
+     fn feof_unlocked(__stream : *mut _IO_FILE) -> i32;
+-    fn findnode_fn(
+-        list : *mut hashlist, key : *const u8
+-    ) -> *mut hashnode;
+     fn fopen(
+         __filename : *const u8, __modes : *const u8
+     ) -> *mut _IO_FILE;
+@@ -35,8 +29,6 @@ extern {
+         __n : *mut usize,
+         __stream : *mut _IO_FILE
+     ) -> isize;
+-    fn getlist() -> *mut hashlist;
+-    fn getnode() -> *mut hashnode;
+     fn isdir(file : *const u8) -> bool;
+     fn isfile(file : *const u8) -> bool;
+     static mut noexec : i32;
+@@ -71,18 +63,14 @@ extern {
+     fn strncmp(__s1 : *const u8, __s2 : *const u8, __n : usize) -> i32;
+     fn time_stamp(file : *const u8) -> *mut u8;
+     fn unlink_file(f : *const u8) -> i32;
+-    fn walklist(
+-        list : *mut hashlist,
+-        arg2
+-        :
+-        unsafe extern fn(*mut hashnode, *mut ::std::os::raw::c_void) -> i32,
+-        closure : *mut ::std::os::raw::c_void
+-    ) -> i32;
+     fn xfopen(arg1 : *const u8, arg2 : *const u8) -> *mut _IO_FILE;
+     fn xmalloc(s : usize) -> *mut ::std::os::raw::c_void;
+     fn xzalloc(s : usize) -> *mut ::std::os::raw::c_void;
+ }
+ 
++use hash::{ntype, hashnode, hashlist, addnode, dellist, delnode, findnode_fn, getlist, getnode, walklist};
++use vers_ts::file_info;
++
+ enum _IO_FILE {
+ }
+ 
+@@ -92,49 +80,6 @@ static mut entfilename : *mut u8 = 0 as
+ 
+ #[derive(Clone, Copy)]
+ #[repr(i32)]
+-pub enum ntype {
+-    NT_UNKNOWN,
+-    HEADER,
+-    ENTRIES,
+-    FILES,
+-    LIST,
+-    RCSNODE,
+-    RCSVERS,
+-    DIRS,
+-    UPDATE,
+-    LOCK,
+-    NDBMNODE,
+-    FILEATTR,
+-    VARIABLE,
+-    RCSFIELD,
+-    RCSCMPFLD,
+-    RCSSTRING,
+-}
+-
+-#[derive(Clone, Copy)]
+-#[repr(C)]
+-pub struct hashnode {
+-    pub type_ : ntype,
+-    pub next : *mut hashnode,
+-    pub prev : *mut hashnode,
+-    pub hashnext : *mut hashnode,
+-    pub hashprev : *mut hashnode,
+-    pub key : *mut u8,
+-    pub data : *mut ::std::os::raw::c_void,
+-    pub len : usize,
+-    pub delproc : unsafe extern fn(*mut hashnode),
+-}
+-
+-#[derive(Clone, Copy)]
+-#[repr(C)]
+-pub struct hashlist {
+-    pub list : *mut hashnode,
+-    pub hasharray : [*mut hashnode; 151],
+-    pub next : *mut hashlist,
+-}
+-
+-#[derive(Clone, Copy)]
+-#[repr(i32)]
+ pub enum ent_type {
+     ENT_FILE,
+     ENT_SUBDIR,
+@@ -254,40 +199,6 @@ pub unsafe extern fn Scratch_Entry(
+     }
+ }
+ 
+-#[derive(Clone, Copy)]
+-#[repr(C)]
+-pub struct rcsnode {
+-    pub refcount : i32,
+-    pub flags : i32,
+-    pub path : *mut u8,
+-    pub print_path : *mut u8,
+-    pub head : *mut u8,
+-    pub branch : *mut u8,
+-    pub symbols_data : *mut u8,
+-    pub expand : *mut u8,
+-    pub symbols : *mut hashlist,
+-    pub versions : *mut hashlist,
+-    pub access : *mut u8,
+-    pub locks_data : *mut u8,
+-    pub locks : *mut hashlist,
+-    pub strict_locks : i32,
+-    pub comment : *mut u8,
+-    pub desc : *mut u8,
+-    pub delta_pos : isize,
+-    pub other : *mut hashlist,
+-}
+-
+-#[derive(Clone, Copy)]
+-#[repr(C)]
+-pub struct file_info {
+-    pub file : *const u8,
+-    pub update_dir : *const u8,
+-    pub fullname : *const u8,
+-    pub repository : *const u8,
+-    pub entries : *mut hashlist,
+-    pub rcs : *mut rcsnode,
+-}
+-
+ unsafe extern fn Entnode_Create(
+     mut type_ : ent_type,
+     mut user : *const u8,
