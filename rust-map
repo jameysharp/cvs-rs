@@ -43,6 +43,10 @@ entries:
 - entriesGetNonbranch # as get_nonbranch
 - entriesGetDate # as get_date
 
+commit:
+- commit
+- update_delproc
+
 #rcs:
 #- struct rcsnode
 #- struct file_info

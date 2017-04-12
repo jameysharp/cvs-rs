@@ -17,7 +17,7 @@ Index: b/src/vers_ts.rs
 ===================================================================
 --- a/src/vers_ts.rs
 +++ b/src/vers_ts.rs
-@@ -241,7 +241,7 @@ pub unsafe extern fn Version_TS(
+@@ -248,7 +248,7 @@ pub unsafe extern fn Version_TS(
              (*vers_ts).vn_rcs = Xstrdup((*vers_ts).vn_user as (*const u8));
              (*vers_ts).vn_tag = Xstrdup((*vers_ts).vn_user as (*const u8));
          } else {
@@ -26,7 +26,7 @@ Index: b/src/vers_ts.rs
              (*vers_ts).vn_rcs = RCS_getversion(
                                      rcsdata,
                                      (*vers_ts).tag as (*const u8),
-@@ -261,12 +261,7 @@ pub unsafe extern fn Version_TS(
+@@ -268,12 +268,7 @@ pub unsafe extern fn Version_TS(
              if server_active != 0 {
                  server_modtime(finfo,vers_ts);
              } else {
@@ -40,7 +40,7 @@ Index: b/src/vers_ts.rs
                  t.modtime = RCS_getrevtime(
                                  rcsdata,
                                  (*vers_ts).vn_rcs as (*const u8),
-@@ -330,7 +325,7 @@ unsafe extern fn time_stamp_server(
+@@ -337,7 +332,7 @@ unsafe extern fn time_stamp_server(
      mut vers_ts : *mut vers_ts,
      mut entdata : *mut ::entries::entnode
  ) {
@@ -49,7 +49,7 @@ Index: b/src/vers_ts.rs
      if lstat(file,&mut sb as (*mut stat)) < 0i32 {
          if !(*__errno_location() == 2i32) {
              error(
-@@ -412,7 +407,7 @@ pub unsafe extern fn entries_time(mut un
+@@ -419,7 +414,7 @@ pub unsafe extern fn entries_time(mut un
  
  #[no_mangle]
  pub unsafe extern fn unix_time_stamp(mut file : *const u8) -> isize {
@@ -246,3 +246,119 @@ Index: b/src/entries.rs
          let mut node : *mut ::hash::hashnode;
          'loop9: loop {
              if !({
+Index: b/src/commit.rs
+===================================================================
+--- a/src/commit.rs
++++ b/src/commit.rs
+@@ -265,9 +265,6 @@ extern {
+         which : i32,
+         aflag : i32
+     ) -> i32;
+-    fn memset(
+-        __s : *mut ::std::os::raw::c_void, __c : i32, __n : usize
+-    ) -> *mut ::std::os::raw::c_void;
+     fn mkmodules(dir : *mut u8) -> i32;
+     static mut noexec : i32;
+     fn notify_do(
+@@ -817,14 +814,9 @@ pub unsafe extern fn commit(
+     let mut c : i32;
+     let mut err : i32 = 0i32;
+     let mut local : i32 = 0i32;
+-    let mut commit_data : commit_data;
++    let mut commit_data : commit_data = ::std::mem::zeroed();
+     let mut flags : i32;
+     let mut short_options : [u8; 16] = *b"+cgG:lRm:fF:r:n\0";
+-    memset(
+-        &mut commit_data as (*mut commit_data) as (*mut ::std::os::raw::c_void),
+-        0i32,
+-        ::std::mem::size_of::<commit_data>()
+-    );
+     if argc == -1i32 {
+         usage(commit_usage.as_ptr());
+     }
+@@ -921,7 +913,7 @@ pub unsafe extern fn commit(
+     }
+     if !logfile.is_null() {
+         let mut size : usize = 0usize;
+-        let mut len : usize;
++        let mut len : usize = 0;
+         if !commit_data.saved_message.is_null() {
+             error(
+                 1i32,
+@@ -939,14 +931,16 @@ pub unsafe extern fn commit(
+         );
+     }
+     if (*current_parsed_root).isremote {
+-        let mut find_args : find_data;
+         ign_setup();
+-        find_args.ulist = ::hash::getlist();
+-        find_args.argc = 0i32;
+-        find_args.questionables = 0i32 as (*mut ::std::os::raw::c_void) as (*mut question);
+-        find_args.ignlist = 0i32 as (*mut ::std::os::raw::c_void) as (*mut ::hash::hashlist);
+-        find_args.repository = 0i32 as (*mut ::std::os::raw::c_void) as (*const u8);
+-        find_args.force = (force_ci != 0 || saved_tag != 0i32 as (*mut ::std::os::raw::c_void) as (*mut u8)) as (i32);
++        let mut find_args : find_data = find_data {
++            ulist: ::hash::getlist(),
++            argc: 0i32,
++            argv: 0 as (*mut *mut u8),
++            questionables: 0i32 as (*mut ::std::os::raw::c_void) as (*mut question),
++            ignlist: 0i32 as (*mut ::std::os::raw::c_void) as (*mut ::hash::hashlist),
++            repository: 0i32 as (*mut ::std::os::raw::c_void) as (*const u8),
++            force: (force_ci != 0 || saved_tag != 0i32 as (*mut ::std::os::raw::c_void) as (*mut u8)) as (i32),
++        };
+         err = start_recursion(
+                   Some(find_fileproc),
+                   Some(find_filesdoneproc),
+@@ -1071,7 +1065,7 @@ pub unsafe extern fn commit(
+              send_to_server((*b"ci\n\0").as_ptr(),0usize);
+              err = get_responses_and_close();
+              if err != 0i32 && (use_editor != 0) && (commit_data.saved_message != 0i32 as (*mut ::std::os::raw::c_void) as (*mut u8)) {
+-                 let mut fname : *mut u8;
++                 let mut fname : *mut u8 = 0 as (*mut u8);
+                  let mut fp : *mut _IO_FILE;
+                  fp = cvs_temp_file(&mut fname as (*mut *mut u8));
+                  if fp == 0i32 as (*mut ::std::os::raw::c_void) as (*mut _IO_FILE) {
+@@ -1254,7 +1248,7 @@ unsafe extern fn classify_file_internal(
+             }
+         } else {
+             let mut xtag : *mut u8;
+-            let mut cp : *mut u8;
++            let mut cp : *mut u8 = 0 as (*mut u8);
+             xtag = Xstrdup(saved_tag as (*const u8));
+             if numdots(xtag as (*const u8)) & 1i32 != 0i32 {
+                 cp = strrchr(xtag as (*const u8),b'.' as (i32));
+@@ -1425,7 +1419,7 @@ unsafe extern fn check_fileproc(
+             }
+             _currentBlock = 68;
+         } else if status as (i32) == classify_type::T_REMOVED as (i32) || status as (i32) == classify_type::T_ADDED as (i32) || status as (i32) == classify_type::T_MODIFIED as (i32) || status as (i32) == classify_type::T_CONFLICT as (i32) {
+-            let mut editor : *mut u8;
++            let mut editor : *mut u8 = 0i32 as (*mut ::std::os::raw::c_void) as (*mut u8);
+             if saved_tag.is_null() || isdigit(*saved_tag as (i32)) == 0 {
+                 if !(*vers).date.is_null() {
+                     error(
+@@ -1607,7 +1601,6 @@ unsafe extern fn check_fileproc(
+                             let mut editors
+                                 : *mut u8
+                                 = 0i32 as (*mut ::std::os::raw::c_void) as (*mut u8);
+-                            editor = 0i32 as (*mut ::std::os::raw::c_void) as (*mut u8);
+                             editors = fileattr_get0((*finfo).file,(*b"_editors\0").as_ptr());
+                             if !editors.is_null() {
+                                 let mut caller : *mut u8 = getcaller();
+@@ -2255,7 +2248,7 @@ unsafe extern fn commit_fileproc(
+              } else if (*ci).status as (i32) != classify_type::T_REMOVED as (i32) || (*config).UseNewInfoFmtStrings {
+                  p = ::hash::findnode(ulist,(*finfo).file);
+                  if !p.is_null() {
+-                     let mut vers : *mut ::vers_ts::vers_ts;
++                     let mut vers : *mut ::vers_ts::vers_ts = 0 as (*mut ::vers_ts::vers_ts);
+                      let mut li : *mut logfile_info;
+                      classify_file_internal(
+                          finfo,
+@@ -2829,7 +2822,7 @@ unsafe extern fn checkaddfile(
+     mut rcsnode : *mut *mut ::vers_ts::rcsnode
+ ) -> i32 {
+     let mut _currentBlock;
+-    let mut rcs : *mut ::vers_ts::rcsnode;
++    let mut rcs : *mut ::vers_ts::rcsnode = 0 as (*mut ::vers_ts::rcsnode);
+     let mut fname : *mut u8;
+     let mut newfile : i32 = 0i32;
+     let mut retval : i32 = 1i32;

@@ -105,3 +105,48 @@ Index: b/src/log.rs
  
  unsafe extern fn streq(
      mut a : *const u8, mut b : *const u8
+Index: b/src/commit.rs
+===================================================================
+--- a/src/commit.rs
++++ b/src/commit.rs
+@@ -397,27 +397,19 @@ static mut mulist
+ 
+ static mut last_register_time : isize = 0isize;
+ 
+-static mut commit_usage
+-    : [*const u8; 11]
+-    = [   (*b"Usage: %s %s [-cRlf] [-m msg | -F logfile] [-r rev] [files...]\n\0").as_ptr(
+-          ),
+-          (*b"\n\0").as_ptr(),
+-          (*b"    -c          Check for valid edits before committing.\n\0").as_ptr(
+-          ),
+-          (*b"    -R          Process directories recursively.\n\0").as_ptr(
+-          ),
+-          (*b"    -l          Local directory only (not recursive).\n\0").as_ptr(
+-          ),
+-          (*b"    -f          Force the file to be committed; disables recursion.\n\0").as_ptr(
+-          ),
+-          (*b"    -F logfile  Read the log message from file.\n\0").as_ptr(),
+-          (*b"    -m msg      Log message.\n\0").as_ptr(),
+-          (*b"    -r rev      Commit to this branch or trunk revision.\n\0").as_ptr(
+-          ),
+-          (*b"(Specify the --help global option for a list of other help options)\n\0").as_ptr(
+-          ),
+-          0i32 as (*mut ::std::os::raw::c_void) as (*const u8)
+-      ];
++static mut commit_usage : [*const u8; 11] = [
++    b"Usage: %s %s [-cRlf] [-m msg | -F logfile] [-r rev] [files...]\n\0" as (*const u8),
++    b"\n\0" as (*const u8),
++    b"    -c          Check for valid edits before committing.\n\0" as (*const u8),
++    b"    -R          Process directories recursively.\n\0" as (*const u8),
++    b"    -l          Local directory only (not recursive).\n\0" as (*const u8),
++    b"    -f          Force the file to be committed; disables recursion.\n\0" as (*const u8),
++    b"    -F logfile  Read the log message from file.\n\0" as (*const u8),
++    b"    -m msg      Log message.\n\0" as (*const u8),
++    b"    -r rev      Commit to this branch or trunk revision.\n\0" as (*const u8),
++    b"(Specify the --help global option for a list of other help options)\n\0" as (*const u8),
++    0i32 as (*mut ::std::os::raw::c_void) as (*const u8)
++];
+ 
+ #[derive(Copy)]
+ #[repr(C)]

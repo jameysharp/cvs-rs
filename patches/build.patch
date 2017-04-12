@@ -12,7 +12,7 @@ Index: b/src/Makefile.am
 ===================================================================
 --- a/src/Makefile.am
 +++ b/src/Makefile.am
-@@ -31,7 +31,6 @@ cvs_SOURCES = \
+@@ -31,32 +31,25 @@ cvs_SOURCES = \
  	annotate.c \
  	base.c base.h \
  	buffer.c \
@@ -20,7 +20,10 @@ Index: b/src/Makefile.am
  	checkout.c \
  	classify.c classify.h \
  	client.c \
-@@ -42,21 +41,16 @@ cvs_SOURCES = \
+ 	command_line_opt.h \
+-	commit.c \
+ 	create_adm.c \
+ 	cvsrc.c \
  	diff.c diff.h \
  	difflib.c difflib.h \
  	edit.c \
@@ -43,7 +46,7 @@ Index: b/src/Makefile.am
  	log-buffer.c log-buffer.h \
  	login.c \
  	logmsg.c logmsg.h \
-@@ -70,7 +64,6 @@ cvs_SOURCES = \
+@@ -70,7 +63,6 @@ cvs_SOURCES = \
  	parseinfo.c parseinfo.h \
  	patch.c \
  	rcs.c \
@@ -51,7 +54,7 @@ Index: b/src/Makefile.am
  	recurse.c recurse.h \
  	release.c \
  	remove.c \
-@@ -78,19 +71,18 @@ cvs_SOURCES = \
+@@ -78,19 +70,18 @@ cvs_SOURCES = \
  	root.c \
  	rsh-client.c rsh-client.h \
  	run.c run.h \
@@ -74,12 +77,13 @@ Index: b/src/Makefile.am
  	zlib.c \
  	buffer.h \
  	client.h \
-@@ -107,15 +99,41 @@ cvs_SOURCES = \
+@@ -107,15 +98,42 @@ cvs_SOURCES = \
  	update.h \
  	watch.h
  
 +RUST_SOURCES = \
 +	checkin.rs \
++	commit.rs \
 +	entries.rs \
 +	exithandle.rs \
 +	fileattr.rs \

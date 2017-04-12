@@ -204,3 +204,134 @@ Index: b/src/entries.rs
      }
      if do_rewrite != 0 && (noexec == 0) {
          write_entries(entries,update_dir_i,dir);
+Index: b/src/commit.rs
+===================================================================
+--- a/src/commit.rs
++++ b/src/commit.rs
+@@ -48,7 +48,7 @@ extern {
+         arg6 : *const u8,
+         arg7
+         :
+-        unsafe extern fn(*mut ::std::os::raw::c_void, *const u8, usize),
++        Option<unsafe extern fn(*mut ::std::os::raw::c_void, *const u8, usize)>,
+         arg8 : *mut ::std::os::raw::c_void
+     ) -> i32;
+     fn RCS_deltag(
+@@ -322,16 +322,16 @@ extern {
+     fn start_recursion(
+         fileproc
+         :
+-        unsafe extern fn(*mut ::std::os::raw::c_void, *mut ::vers_ts::file_info) -> i32,
++        Option<unsafe extern fn(*mut ::std::os::raw::c_void, *mut ::vers_ts::file_info) -> i32>,
+         filesdoneproc
+         :
+-        unsafe extern fn(*mut ::std::os::raw::c_void, i32, *const u8, *const u8, *mut ::hash::hashlist) -> i32,
++        Option<unsafe extern fn(*mut ::std::os::raw::c_void, i32, *const u8, *const u8, *mut ::hash::hashlist) -> i32>,
+         direntproc
+         :
+-        unsafe extern fn(*mut ::std::os::raw::c_void, *const u8, *const u8, *const u8, *mut ::hash::hashlist) -> direnter_type,
++        Option<unsafe extern fn(*mut ::std::os::raw::c_void, *const u8, *const u8, *const u8, *mut ::hash::hashlist) -> direnter_type>,
+         dirleaveproc
+         :
+-        unsafe extern fn(*mut ::std::os::raw::c_void, *const u8, i32, *const u8, *mut ::hash::hashlist) -> i32,
++        Option<unsafe extern fn(*mut ::std::os::raw::c_void, *const u8, i32, *const u8, *mut ::hash::hashlist) -> i32>,
+         callerdat : *mut ::std::os::raw::c_void,
+         argc : i32,
+         argv : *mut *mut u8,
+@@ -708,7 +708,7 @@ unsafe extern fn find_fileproc(
+                               (*data).rev_new
+                           };
+         (*node).type_ = ::hash::ntype::UPDATE;
+-        (*node).delproc = update_delproc as (unsafe extern fn(*mut hashnode));
++        (*node).delproc = Some(update_delproc);
+         (*node).data = data as (*mut ::std::os::raw::c_void);
+         ::hash::addnode((*args).ulist,node);
+         (*args).argc = (*args).argc + 1;
+@@ -948,10 +948,10 @@ pub unsafe extern fn commit(
+         find_args.repository = 0i32 as (*mut ::std::os::raw::c_void) as (*const u8);
+         find_args.force = (force_ci != 0 || saved_tag != 0i32 as (*mut ::std::os::raw::c_void) as (*mut u8)) as (i32);
+         err = start_recursion(
+-                  find_fileproc,
+-                  find_filesdoneproc,
+-                  find_dirent_proc,
+-                  0i32 as (*mut ::std::os::raw::c_void) as (unsafe extern fn(*mut ::std::os::raw::c_void, *const u8, i32, *const u8, *mut ::hash::hashlist) -> i32),
++                  Some(find_fileproc),
++                  Some(find_filesdoneproc),
++                  Some(find_dirent_proc),
++                  None,
+                   &mut find_args as (*mut find_data) as (*mut ::std::os::raw::c_void),
+                   argc,
+                   argv,
+@@ -1133,10 +1133,10 @@ pub unsafe extern fn commit(
+         }
+         mulist = ::hash::getlist();
+         if start_recursion(
+-               check_fileproc,
+-               check_filesdoneproc,
+-               check_direntproc,
+-               0i32 as (*mut ::std::os::raw::c_void) as (unsafe extern fn(*mut ::std::os::raw::c_void, *const u8, i32, *const u8, *mut ::hash::hashlist) -> i32),
++               Some(check_fileproc),
++               Some(check_filesdoneproc),
++               Some(check_direntproc),
++               None,
+                &mut commit_data as (*mut commit_data) as (*mut ::std::os::raw::c_void),
+                argc,
+                argv,
+@@ -1153,10 +1153,10 @@ pub unsafe extern fn commit(
+         write_dirnonbranch = 0i32;
+         if noexec == 0i32 {
+             err = start_recursion(
+-                      commit_fileproc,
+-                      commit_filesdoneproc,
+-                      commit_direntproc,
+-                      commit_dirleaveproc,
++                      Some(commit_fileproc),
++                      Some(commit_filesdoneproc),
++                      Some(commit_direntproc),
++                      Some(commit_dirleaveproc),
+                       &mut commit_data as (*mut commit_data) as (*mut ::std::os::raw::c_void),
+                       argc,
+                       argv,
+@@ -1592,13 +1592,13 @@ unsafe extern fn check_fileproc(
+                             (*p).key = Xstrdup(xdir);
+                             (*p).type_ = ::hash::ntype::UPDATE;
+                             (*p).data = ml as (*mut ::std::os::raw::c_void);
+-                            (*p).delproc = masterlist_delproc as (unsafe extern fn(*mut hashnode));
++                            (*p).delproc = Some(masterlist_delproc);
+                             ::hash::addnode(mulist,p);
+                         }
+                         p = ::hash::getnode();
+                         (*p).key = Xstrdup((*finfo).file);
+                         (*p).type_ = ::hash::ntype::UPDATE;
+-                        (*p).delproc = update_delproc as (unsafe extern fn(*mut hashnode));
++                        (*p).delproc = Some(update_delproc);
+                         li = xmalloc(
+                                  ::std::mem::size_of::<logfile_info>()
+                              ) as (*mut logfile_info);
+@@ -1668,7 +1668,7 @@ unsafe extern fn check_fileproc(
+                             p = ::hash::getnode();
+                             (*p).key = Xstrdup((*finfo).file);
+                             (*p).type_ = ::hash::ntype::UPDATE;
+-                            (*p).delproc = ci_delproc as (unsafe extern fn(*mut hashnode));
++                            (*p).delproc = Some(ci_delproc);
+                             ci = xmalloc(
+                                      ::std::mem::size_of::<commit_info>()
+                                  ) as (*mut commit_info);
+@@ -1925,7 +1925,7 @@ unsafe extern fn precommit_proc(
+                   (*b"saT\0").as_ptr(),
+                   (*b",\0").as_ptr(),
+                   ulist,
+-                  precommit_list_to_args_proc,
++                  precommit_list_to_args_proc as (*mut ::std::os::raw::c_void),
+                   0i32 as (*mut ::std::os::raw::c_void),
+                   0i32 as (*mut ::std::os::raw::c_void) as (*mut u8)
+               );
+@@ -2592,7 +2592,7 @@ unsafe extern fn remove_file(
+                       0i32 as (*mut ::std::os::raw::c_void) as (*const u8),
+                       0i32 as (*mut ::std::os::raw::c_void) as (*const u8),
+                       0i32 as (*mut ::std::os::raw::c_void) as (*const u8),
+-                      0i32 as (*mut ::std::os::raw::c_void) as (unsafe extern fn(*mut ::std::os::raw::c_void, *const u8, usize)),
++                      None,
+                       0i32 as (*mut ::std::os::raw::c_void)
+                   );
+         (if retcode != 0i32 {
