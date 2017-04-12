@@ -7,7 +7,7 @@ Index: b/src/log.rs
 ===================================================================
 --- a/src/log.rs
 +++ b/src/log.rs
-@@ -2278,10 +2278,10 @@ unsafe extern fn version_compare(
+@@ -2323,10 +2323,10 @@ unsafe extern fn version_compare(
      mut v1 : *const u8, mut v2 : *const u8, mut len : i32
  ) -> i32 {
      let mut _currentBlock;

@@ -8,12 +8,12 @@ Index: b/src/log.rs
 ===================================================================
 --- a/src/log.rs
 +++ b/src/log.rs
-@@ -144,7 +144,7 @@ extern {
- 
- use hash::{hashnode, hashlist, addnode, dellist, findnode, freenode, getlist, getnode, walklist};
+@@ -152,7 +152,7 @@ extern {
+     fn xmalloc(s : usize) -> *mut ::std::os::raw::c_void;
+ }
  
 -enum buffer_data {
 +pub enum buffer_data {
  }
  
- #[derive(Clone, Copy)]
+ #[derive(Copy)]

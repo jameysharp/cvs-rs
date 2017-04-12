@@ -93,8 +93,8 @@ Index: b/src/Makefile.am
 +	wrapper.rs
 +
 +%.rs: CC=corrode
-+%.rs: %.c
-+	$(COMPILE) -c $< >/dev/null
++%.rs: %.c $(top_srcdir)/rust-map
++	$(COMPILE) -corrode-module-map $(top_srcdir)/rust-map -c $< >/dev/null
 +
 +.PHONY: rust-sources
 +rust-sources: $(RUST_SOURCES)

@@ -23,7 +23,7 @@ Index: b/src/log.rs
 ===================================================================
 --- a/src/log.rs
 +++ b/src/log.rs
-@@ -186,51 +186,36 @@ static mut global_log_data : *mut log_da
+@@ -206,51 +206,36 @@ static mut global_log_data : *mut log_da
  
  static mut is_rlog : i32 = 0i32;
  

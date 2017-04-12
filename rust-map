@@ -1,0 +1,114 @@
+hash:
+- enum ntype
+- struct hashlist
+- struct hashnode
+- getlist
+- findnode
+- findnode_fn
+- getnode
+- insert_before
+- addnode
+- addnode_at_front
+- walklist
+- list_isempty
+- removenode
+- mergelists
+- dellist
+- delnode
+- freenode
+- sortlist
+- fsortcmp
+
+vers_ts:
+- struct vers_ts
+- Version_TS
+- freevers_ts
+- time_stamp
+# temporarily stick these here until we get rcs.c translated:
+- struct rcsnode
+- struct file_info
+
+entries:
+- enum ent_type
+- struct entnode
+# rename things once Corrode fully supports that:
+- Entries_Close # as close
+- Entries_Open_Dir # as open_dir
+- Entries_Open # as open
+- Register # as register
+- entriesHasSticky # as has_sticky
+- entriesHasAllSubdirs # as has_all_subdirs
+- entriesGetAflag # as get_aflag
+- entriesGetTag # as get_tag
+- entriesGetNonbranch # as get_nonbranch
+- entriesGetDate # as get_date
+
+#rcs:
+#- struct rcsnode
+#- struct file_info
+#- struct deltatext
+#- struct rcsversnode
+#- typedef RCSCHECKOUTPROC
+#- struct rcsbuffer
+#- enum rcs_delta_op
+#- RCS_parse
+#- RCS_parsercsfile
+#- RCS_fully_parse
+#- RCS_reparsercsfile
+#- RCS_setattic
+#- RCS_check_kflag
+#- RCS_getdate
+#- RCS_gettag
+#- RCS_exist_rev
+#- RCS_exist_tag
+#- RCS_tag2rev
+#- RCS_getversion
+#- RCS_magicrev
+#- RCS_isbranch
+#- RCS_nodeisbranch
+#- RCS_whatbranch
+#- RCS_head
+#- RCS_datecmp
+#- RCS_getrevtime
+#- RCS_symbols
+#- RCS_check_tag
+#- RCS_valid_rev
+#- RCS_getlocks
+#- freercsnode
+#- RCS_getbranch
+#- RCS_branch_head
+#- RCS_isdead
+#- RCS_getexpand
+#- RCS_setexpand
+#- RCS_checkout
+#- RCS_get_openpgp_signatures
+#- RCS_has_openpgp_signatures
+#- RCS_add_openpgp_signature
+#- RCS_delete_openpgp_signatures
+#- RCS_checkin
+#- RCS_cmp_file
+#- RCS_settag
+#- RCS_deltag
+#- RCS_setbranch
+#- RCS_lock
+#- RCS_unlock
+#- RCS_delete_revs
+#- RCS_addaccess
+#- RCS_delaccess
+#- RCS_getaccess
+#- RCS_rewrite
+#- RCS_abandon
+#- rcs_change_text
+#- RCS_deltas
+#- RCS_setincexc
+#- RCS_setlocalid
+#- make_file_label
+#- preserve_perms
+#- annotate_width
+
+#import:
+#- add_rcs_file
+#- free_keywords
+#- contains_keyword
+#- RCS_output_diff_options
+#- locate_rcs

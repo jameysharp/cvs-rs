@@ -23,8 +23,8 @@ Index: b/src/hash.rs
 +    pub delproc : Option<unsafe extern fn(*mut hashnode)>,
  }
  
- #[derive(Clone, Copy)]
-@@ -213,8 +213,8 @@ pub unsafe extern fn delnode(mut p : *mu
+ impl Clone for hashnode {
+@@ -221,8 +221,8 @@ pub unsafe extern fn delnode(mut p : *mu
  }
  
  unsafe extern fn freenode_mem(mut p : *mut hashnode) {
@@ -35,7 +35,7 @@ Index: b/src/hash.rs
      } else if (*p).data != 0i32 as (*mut ::std::os::raw::c_void) {
          free((*p).data);
      }
-@@ -225,7 +225,7 @@ unsafe extern fn freenode_mem(mut p : *m
+@@ -233,7 +233,7 @@ unsafe extern fn freenode_mem(mut p : *m
                     (*p).data = 0i32 as (*mut ::std::os::raw::c_void);
                     (*p).data
                 } as (*mut u8);
@@ -44,7 +44,7 @@ Index: b/src/hash.rs
  }
  
  #[no_mangle]
-@@ -472,8 +472,8 @@ pub unsafe extern fn list_isempty(mut li
+@@ -480,8 +480,8 @@ pub unsafe extern fn list_isempty(mut li
  }
  
  static mut client_comp
@@ -55,7 +55,7 @@ Index: b/src/hash.rs
  
  unsafe extern fn xnmalloc(
      mut n : usize, mut s : usize
-@@ -497,7 +497,7 @@ unsafe extern fn qsort_comp(
+@@ -505,7 +505,7 @@ unsafe extern fn qsort_comp(
  ) -> i32 {
      let mut node1 : *mut *mut hashnode = elem1 as (*mut *mut hashnode);
      let mut node2 : *mut *mut hashnode = elem2 as (*mut *mut hashnode);
@@ -64,7 +64,7 @@ Index: b/src/hash.rs
          *node1 as (*const hashnode),
          *node2 as (*const hashnode)
      )
-@@ -509,7 +509,7 @@ pub unsafe extern fn sortlist(
+@@ -517,7 +517,7 @@ pub unsafe extern fn sortlist(
      mut
      comp
      :
@@ -77,37 +77,37 @@ Index: b/src/fileattr.rs
 ===================================================================
 --- a/src/fileattr.rs
 +++ b/src/fileattr.rs
-@@ -222,7 +222,7 @@ unsafe extern fn fileattr_read() {
-                      } = b'\0';
-                     newnode = getnode();
-                     (*newnode).type_ = ntype::FILEATTR;
--                    (*newnode).delproc = fileattr_delproc as (unsafe extern fn(*mut hashnode));
-+                    (*newnode).delproc = Some(fileattr_delproc);
-                     (*newnode).key = Xstrdup(line.offset(1isize) as (*const u8));
-                     (*newnode).data = Xstrdup(
-                                           p as (*const u8)
-@@ -566,7 +566,7 @@ pub unsafe extern fn fileattr_set(
+@@ -228,7 +228,7 @@ unsafe extern fn fileattr_read() {
+                       } = b'\0';
+                      newnode = ::hash::getnode();
+                      (*newnode).type_ = ::hash::ntype::FILEATTR;
+-                     (*newnode).delproc = fileattr_delproc as (unsafe extern fn(*mut hashnode));
++                     (*newnode).delproc = Some(fileattr_delproc);
+                      (*newnode).key = Xstrdup(line.offset(1isize) as (*const u8));
+                      (*newnode).data = Xstrdup(
+                                            p as (*const u8)
+@@ -572,7 +572,7 @@ pub unsafe extern fn fileattr_set(
              } else {
-                 node = getnode();
-                 (*node).type_ = ntype::FILEATTR;
+                 node = ::hash::getnode();
+                 (*node).type_ = ::hash::ntype::FILEATTR;
 -                (*node).delproc = fileattr_delproc as (unsafe extern fn(*mut hashnode));
 +                (*node).delproc = Some(fileattr_delproc);
                  (*node).key = Xstrdup(filename);
                  (*node).data = Xasprintf(
                                     (*b"%s=%s\0").as_ptr(),
-@@ -642,7 +642,7 @@ pub unsafe extern fn fileattr_setall(
+@@ -648,7 +648,7 @@ pub unsafe extern fn fileattr_setall(
              if attrs != 0i32 as (*mut ::std::os::raw::c_void) as (*const u8) {
-                 node = getnode();
-                 (*node).type_ = ntype::FILEATTR;
+                 node = ::hash::getnode();
+                 (*node).type_ = ::hash::ntype::FILEATTR;
 -                (*node).delproc = fileattr_delproc as (unsafe extern fn(*mut hashnode));
 +                (*node).delproc = Some(fileattr_delproc);
                  (*node).key = Xstrdup(filename);
                  (*node).data = Xstrdup(attrs) as (*mut ::std::os::raw::c_void);
-                 addnode(attrlist,node);
-@@ -670,7 +670,7 @@ pub unsafe extern fn fileattr_newfile(mu
+                 ::hash::addnode(attrlist,node);
+@@ -676,7 +676,7 @@ pub unsafe extern fn fileattr_newfile(mu
          }
-         node = getnode();
-         (*node).type_ = ntype::FILEATTR;
+         node = ::hash::getnode();
+         (*node).type_ = ::hash::ntype::FILEATTR;
 -        (*node).delproc = fileattr_delproc as (unsafe extern fn(*mut hashnode));
 +        (*node).delproc = Some(fileattr_delproc);
          (*node).key = Xstrdup(filename);
@@ -117,7 +117,7 @@ Index: b/src/log.rs
 ===================================================================
 --- a/src/log.rs
 +++ b/src/log.rs
-@@ -34,7 +34,7 @@ extern {
+@@ -44,7 +44,7 @@ extern {
      ) -> bool;
      fn buf_free(arg1 : *mut buffer);
      fn buf_nonio_initialize(
@@ -126,35 +126,35 @@ Index: b/src/log.rs
      ) -> *mut buffer;
      fn buf_output(arg1 : *mut buffer, arg2 : *const u8, arg3 : usize);
      fn chdir(__path : *const u8) -> i32;
-@@ -105,16 +105,16 @@ extern {
+@@ -115,16 +115,16 @@ extern {
      fn start_recursion(
          fileproc
          :
--        unsafe extern fn(*mut ::std::os::raw::c_void, *mut file_info) -> i32,
-+        Option<unsafe extern fn(*mut ::std::os::raw::c_void, *mut file_info) -> i32>,
+-        unsafe extern fn(*mut ::std::os::raw::c_void, *mut ::vers_ts::file_info) -> i32,
++        Option<unsafe extern fn(*mut ::std::os::raw::c_void, *mut ::vers_ts::file_info) -> i32>,
          filesdoneproc
          :
--        unsafe extern fn(*mut ::std::os::raw::c_void, i32, *const u8, *const u8, *mut hashlist) -> i32,
-+        Option<unsafe extern fn(*mut ::std::os::raw::c_void, i32, *const u8, *const u8, *mut hashlist) -> i32>,
+-        unsafe extern fn(*mut ::std::os::raw::c_void, i32, *const u8, *const u8, *mut ::hash::hashlist) -> i32,
++        Option<unsafe extern fn(*mut ::std::os::raw::c_void, i32, *const u8, *const u8, *mut ::hash::hashlist) -> i32>,
          direntproc
          :
--        unsafe extern fn(*mut ::std::os::raw::c_void, *const u8, *const u8, *const u8, *mut hashlist) -> direnter_type,
-+        Option<unsafe extern fn(*mut ::std::os::raw::c_void, *const u8, *const u8, *const u8, *mut hashlist) -> direnter_type>,
+-        unsafe extern fn(*mut ::std::os::raw::c_void, *const u8, *const u8, *const u8, *mut ::hash::hashlist) -> direnter_type,
++        Option<unsafe extern fn(*mut ::std::os::raw::c_void, *const u8, *const u8, *const u8, *mut ::hash::hashlist) -> direnter_type>,
          dirleaveproc
          :
--        unsafe extern fn(*mut ::std::os::raw::c_void, *const u8, i32, *const u8, *mut hashlist) -> i32,
-+        Option<unsafe extern fn(*mut ::std::os::raw::c_void, *const u8, i32, *const u8, *mut hashlist) -> i32>,
+-        unsafe extern fn(*mut ::std::os::raw::c_void, *const u8, i32, *const u8, *mut ::hash::hashlist) -> i32,
++        Option<unsafe extern fn(*mut ::std::os::raw::c_void, *const u8, i32, *const u8, *mut ::hash::hashlist) -> i32>,
          callerdat : *mut ::std::os::raw::c_void,
          argc : i32,
          argv : *mut *mut u8,
-@@ -811,10 +811,10 @@ unsafe extern fn rlog_proc(
+@@ -818,10 +818,10 @@ unsafe extern fn rlog_proc(
          which = 1i32 << 0i32 | 1i32 << 1i32 | 1i32 << 2i32;
      }
      err = start_recursion(
 -              log_fileproc,
--              0i32 as (*mut ::std::os::raw::c_void) as (unsafe extern fn(*mut ::std::os::raw::c_void, i32, *const u8, *const u8, *mut hashlist) -> i32),
+-              0i32 as (*mut ::std::os::raw::c_void) as (unsafe extern fn(*mut ::std::os::raw::c_void, i32, *const u8, *const u8, *mut ::hash::hashlist) -> i32),
 -              log_dirproc,
--              0i32 as (*mut ::std::os::raw::c_void) as (unsafe extern fn(*mut ::std::os::raw::c_void, *const u8, i32, *const u8, *mut hashlist) -> i32),
+-              0i32 as (*mut ::std::os::raw::c_void) as (unsafe extern fn(*mut ::std::os::raw::c_void, *const u8, i32, *const u8, *mut ::hash::hashlist) -> i32),
 +              Some(log_fileproc),
 +              None,
 +              Some(log_dirproc),
@@ -162,7 +162,7 @@ Index: b/src/log.rs
                global_log_data as (*mut ::std::os::raw::c_void),
                argc - 1i32,
                argv.offset(1isize),
-@@ -2186,9 +2186,7 @@ unsafe extern fn log_version(
+@@ -2230,9 +2230,7 @@ unsafe extern fn log_version(
              if rawsig.is_null() {
                  xalloc_die();
              }
@@ -177,16 +177,16 @@ Index: b/src/entries.rs
 ===================================================================
 --- a/src/entries.rs
 +++ b/src/entries.rs
-@@ -260,7 +260,7 @@ unsafe extern fn AddEntryNode(
+@@ -263,7 +263,7 @@ unsafe extern fn AddEntryNode(
      }
-     p = getnode();
-     (*p).type_ = ntype::ENTRIES;
+     p = ::hash::getnode();
+     (*p).type_ = ::hash::ntype::ENTRIES;
 -    (*p).delproc = Entries_delproc as (unsafe extern fn(*mut hashnode));
 +    (*p).delproc = Some(Entries_delproc);
      (*p).key = Xstrdup((*entdata).user as (*const u8));
      (*p).data = entdata as (*mut ::std::os::raw::c_void);
-     addnode(list,p);
-@@ -900,7 +900,7 @@ pub unsafe extern fn Entries_Open_Dir(
+     ::hash::addnode(list,p);
+@@ -916,7 +916,7 @@ pub unsafe extern fn Entries_Open_Dir(
          (*sdtp).date = Xstrdup(dirdate as (*const u8));
          (*sdtp).nonbranch = dirnonbranch;
          (*(*entries).list).data = sdtp as (*mut ::std::os::raw::c_void);
@@ -195,7 +195,7 @@ Index: b/src/entries.rs
      }
      sawdir = 0i32;
      update_dir = dir_append(update_dir_i,dir);
-@@ -1005,7 +1005,7 @@ pub unsafe extern fn Entries_Open_Dir(
+@@ -1021,7 +1021,7 @@ pub unsafe extern fn Entries_Open_Dir(
                 ) as (*mut stickydirtag);
          (*sdtp).subdirs = 0i32;
          (*(*entries).list).data = sdtp as (*mut ::std::os::raw::c_void);
